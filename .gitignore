@@ -1,0 +1,26 @@
+# --- Python / backend ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.log
+
+# --- Node / frontend ---
+node_modules/
+.next/
+out/
+
+# --- Local app data: NEVER publish datasets, projects or reports ---
+backend/data/
+data/
+*.db
+*.sqlite3
+
+# --- Environment / secrets ---
+.env
+.env.*
+*.local
+
+# --- OS noise ---
+Thumbs.db
+.DS_Store
