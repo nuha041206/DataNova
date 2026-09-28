@@ -4,9 +4,7 @@
  * Top page header — complements the sidebar on every page.
  * Shows the current section and the live backend status pill.
  */
-import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Settings } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useBackendStatus } from "@/lib/backend-status";
 
@@ -14,7 +12,6 @@ const SECTION_TITLES: { match: (p: string) => boolean; title: string }[] = [
   { match: (p) => p === "/", title: "Dashboard" },
   { match: (p) => p.startsWith("/create"), title: "Create Project" },
   { match: (p) => p.startsWith("/projects"), title: "Project History" },
-  { match: (p) => p.startsWith("/settings"), title: "Settings" },
   { match: (p) => p.startsWith("/about"), title: "Methodology & About" },
 ];
 
@@ -32,13 +29,6 @@ export function Header() {
         <Badge variant={backend === "online" ? "success" : backend === "offline" ? "destructive" : "secondary"}>
           Backend {backend === "checking" ? "…" : backend}
         </Badge>
-        <Link
-          href="/settings"
-          title="Settings"
-          className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-        >
-          <Settings className="h-4 w-4" />
-        </Link>
       </div>
     </header>
   );

@@ -263,6 +263,14 @@ export interface MLUtility {
   target: string;
   model: { key: string; label: string };
   skipped_columns?: string[];
+  dropped_columns?: string[];
+  features_used?: string[];
+  imbalance?: {
+    class_distribution: Record<string, number>;
+    minority_share: number;
+    is_imbalanced: boolean;
+    note: string | null;
+  } | null;
   split: { real_train_rows: number; real_test_rows: number; synthetic_train_rows: number; test_size: number; random_state: number };
   experiment_a: { description: string; metrics: ClassificationMetrics | RegressionMetrics };
   experiment_b: { description: string; metrics: ClassificationMetrics | RegressionMetrics };
@@ -342,6 +350,68 @@ export interface RequirementGenerateResponse {
 export interface ProjectFiles {
   synthetic_csv: { exists: boolean; file: string | null };
   report_pdf: { exists: boolean; generated_at: string | null };
+  messy_csv: { exists: boolean; file: string | null };
+}
+
+export interface MessyConfig {
+  missing_values: number;
+  duplicate_rows: number;
+  whitespace: number;
+  capitalization: number;
+  format_inconsistency: number;
+  invalid_values: number;
+  outliers: number;
+}
+
+export interface MessyPreviewResponse {
+  dataset: { rows: number; columns: number; total_cells: number; filename: string | null };
+  requested_config: MessyConfig;
+  estimates: {
+    missing_cells: number;
+    duplicate_rows: number;
+    whitespace_cells: number;
+    capitalization_cells: number;
+    format_cells: number;
+    invalid_cells: number;
+    outlier_cells: number;
+    text_columns: string[];
+    numeric_columns: string[];
+    formatable_columns: string[];
+  };
+}
+
+export interface MessySummary {
+  original_rows: number;
+  original_columns: number;
+  total_cells: number;
+  requested: Record<string, number>;
+  rows_after_duplicates: number;
+  duplicate_rows_added: number;
+  duplicate_rows_total_present: number;
+  missing_cells_actual: number;
+  missing_cells_target: number;
+  counts: {
+    missing_values: number;
+    duplicate_rows: number;
+    whitespace: number;
+    capitalization: number;
+    format_inconsistencies: number;
+    invalid_values: number;
+    outliers: number;
+  };
+  file?: string;
+}
+
+export interface MessyResult {
+  file: string;
+  summary: MessySummary;
+  preview: Record<string, unknown>[];
+}
+
+export interface SessionMessyResult {
+  summary: MessySummary;
+  actual_percentages: { missing_values: number; duplicate_rows: number };
+  preview: Record<string, unknown>[];
 }
 
 export interface ProjectSummary {
@@ -363,6 +433,8 @@ export interface ProjectSummary {
   sample_seconds: number | null;
   report_generated_at: string | null;
   has_report: boolean;
+  has_messy?: boolean;
+  messy?: MessySummary | null;
 }
 
 export interface ProjectDetail extends ProjectSummary {

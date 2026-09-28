@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/table";
 import { StepHeader } from "@/components/workflow/step-header";
 import { ActionBar } from "@/components/workflow/page-shell";
+import { MessyOptionsSession } from "@/components/create/messy-options";
 import { api, type GeneratePreviewBody } from "@/lib/api";
 import type { GenerationPreview, GenerateResponse, Analysis, Detection } from "@/lib/types";
 
@@ -378,6 +379,10 @@ export default function UploadPreviewPage() {
                 <PreviewTable rows={result.preview} />
               </CardContent>
             </Card>
+
+            {/* Optional realistic data-quality issues — applied to a SEPARATE
+                copy after generation; the clean dataset stays available. */}
+            <MessyOptionsSession uploadId={result.upload_id} rows={result.n_rows_generated} />
           </>
         )}
 
@@ -391,7 +396,7 @@ export default function UploadPreviewPage() {
 
       <ActionBar>
         <Button variant="outline" onClick={() => router.push("/create/upload")}>
-          Modify Settings
+          Change generation settings
         </Button>
         {!result ? (
           <Button onClick={runGeneration} disabled={generating || !preview}>

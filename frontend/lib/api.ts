@@ -19,6 +19,10 @@ import type {
   GenerationPreview,
   GenerateResponse,
   ProjectFiles,
+  MessyConfig,
+  MessyPreviewResponse,
+  MessyResult,
+  SessionMessyResult,
 } from "./types";
 
 export const API_BASE =
@@ -81,6 +85,14 @@ export const api = {
 
   downloadSessionCsv(uploadId: string) {
     window.open(`${API_BASE}/api/upload/${uploadId}/synthetic/download`, "_blank");
+  },
+
+  sessionMessy(uploadId: string, cfg: MessyConfig): Promise<SessionMessyResult> {
+    return post(`/api/upload/${uploadId}/messy`, cfg);
+  },
+
+  downloadSessionMessyCsv(uploadId: string) {
+    window.open(`${API_BASE}/api/upload/${uploadId}/messy/download`, "_blank");
   },
 
   // ---- Evaluation & ML ------------------------------------------------------
@@ -167,6 +179,18 @@ export const api = {
 
   downloadProjectCsv(projectId: number) {
     window.open(`${API_BASE}/api/projects/${projectId}/synthetic/download`, "_blank");
+  },
+
+  downloadMessyCsv(projectId: number) {
+    window.open(`${API_BASE}/api/projects/${projectId}/messy/download`, "_blank");
+  },
+
+  messyPreview(projectId: number, cfg: MessyConfig): Promise<MessyPreviewResponse> {
+    return post(`/api/projects/${projectId}/messy/preview`, cfg);
+  },
+
+  messyGenerate(projectId: number, cfg: MessyConfig): Promise<MessyResult> {
+    return post(`/api/projects/${projectId}/messy`, cfg);
   },
 };
 

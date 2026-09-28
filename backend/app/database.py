@@ -66,6 +66,14 @@ class Project(Base):
     # Synth data preview (first N rows as JSON) so history can show a taste
     synth_preview: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
+    # Messy dataset (JSON summary + file name). Files live in data/synthetic.
+    messy_summary: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    messy_file: Mapped[Optional[str]] = mapped_column(String(300), nullable=True)
+
+    # Session id of the persisted upload (data/uploads/{upload_ref}.csv) so
+    # evaluation / ML utility can reload the real dataset for saved projects.
+    upload_ref: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+
     def to_dict(self, include_payloads: bool = True) -> Dict[str, Any]:
         """Serialise the row; payloads parsed back into dicts when requested."""
         d: Dict[str, Any] = {
@@ -88,6 +96,8 @@ class Project(Base):
             "report_generated_at": self.report_generated_at,
             "report_path": self.report_path,
             "has_report": bool(self.report_path),
+            "messy_file": self.messy_file,
+            "upload_ref": self.upload_ref,
         }
         if include_payloads:
             for field in ("analysis", "detection", "evaluation", "ml_utility",
@@ -95,6 +105,8 @@ class Project(Base):
                 raw = getattr(self, field)
                 d[field] = json.loads(raw) if raw else None
             d["warnings"] = json.loads(self.warnings) if self.warnings else []
+            d["messy"] = json.loads(self.messy_summary) if self.messy_summary else None
+        d["has_messy"] = bool(self.messy_file)
         return d
 
 
@@ -109,8 +121,21 @@ def get_engine():
         config.ensure_dirs()
         _engine = create_engine(f"sqlite:///{config.DB_PATH}", echo=False, future=True)
         Base.metadata.create_all(_engine)
+        _ensure_schema(_engine)
         _SessionLocal = sessionmaker(bind=_engine, expire_on_commit=False)
     return _engine
+
+
+def _ensure_schema(engine) -> None:
+    """Add columns introduced after the first release (idempotent, tiny)."""
+    from sqlalchemy import text
+    with engine.connect() as conn:
+        cols = {r[1] for r in conn.execute(text("PRAGMA table_info(projects)"))}
+        for name, ddl in (("messy_summary", "TEXT"), ("messy_file", "VARCHAR(300)"),
+                          ("upload_ref", "VARCHAR(100)")):
+            if name not in cols:
+                conn.execute(text(f"ALTER TABLE projects ADD COLUMN {name} {ddl}"))
+        conn.commit()
 
 
 def get_session():

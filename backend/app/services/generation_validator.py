@@ -136,8 +136,23 @@ def validate_generation(
         add("Requested ranges", True, "all values within requested ranges")
     if category_violations == 0 and any(spec.get("categories") for spec in column_specs):
         add("Requested categories", True, "all values come from the requested categories")
-    add("Missing values", missing_cells == 0,
-        "no missing cells" if missing_cells == 0 else f"{missing_cells} missing cell(s)")
+    # Missing-value rate: when a source dataset is provided, generation should
+    # roughly PRESERVE its missingness (a source with gaps legitimately
+    # produces synthetic gaps); only clearly excessive missingness fails.
+    if original is not None and len(original):
+        src_cells = max(original.shape[0] * original.shape[1], 1)
+        syn_cells = max(len(df) * df.shape[1], 1)
+        src_rate = float(original.isna().sum().sum()) / src_cells
+        syn_rate = missing_cells / syn_cells
+        if src_rate == 0:
+            add("Missing values", missing_cells == 0,
+                "no missing cells" if missing_cells == 0 else f"{missing_cells} missing cell(s)")
+        else:
+            add("Missing values", syn_rate <= src_rate + 0.10,
+                f"{syn_rate:.1%} of cells missing (source dataset has {src_rate:.1%})")
+    else:
+        add("Missing values", missing_cells == 0,
+            "no missing cells" if missing_cells == 0 else f"{missing_cells} missing cell(s)")
 
     # 4. duplicates + uniqueness
     uni = uniqueness_report(df, unique_columns)

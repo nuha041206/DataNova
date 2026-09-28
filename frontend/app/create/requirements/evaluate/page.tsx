@@ -26,6 +26,7 @@ import {
 } from "recharts";
 import { StepHeader } from "@/components/workflow/step-header";
 import { ActionBar } from "@/components/workflow/page-shell";
+import { MessyOptionsSession } from "@/components/create/messy-options";
 import { api } from "@/lib/api";
 import type { RequirementGenerateResponse } from "@/lib/types";
 import { INTERPRETATION_NOTES } from "@/lib/notes";
@@ -222,6 +223,10 @@ export default function RequirementsEvaluatePage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Optional realistic data-quality issues — applied to a SEPARATE copy
+            of the generated dataset; the clean version stays available. */}
+        <MessyOptionsSession uploadId={result.session_id ?? ""} rows={summary.rows} />
 
         {result.warnings.length > 0 && (
           <Alert variant="warning">

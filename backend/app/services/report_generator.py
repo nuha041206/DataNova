@@ -43,7 +43,6 @@ from reportlab.platypus import (
 from .. import config
 
 APP_VERSION = "1.0.0"
-AUTHOR = "Nuha Khan"
 
 # DataNova brand palette (darkest → cream)
 _DARK = colors.HexColor("#400202")
@@ -355,27 +354,37 @@ def generate_report(project: Dict[str, Any], out_path: Path) -> Path:
         project.get("mode"), str(project.get("mode", "—")))
 
     # ---------------------------------------------------------------- cover
+    # [LOGO] DataNova / Synthetic Data Studio — locked row, logo never floats
+    logo_cell: Any = ""
     if LOGO_PATH.exists():
-        # logo_trimmed.png is 1115x890; size the box to the same aspect ratio
-        # so the mark is never stretched (platypus Image lacks drawImage's
-        # preserveAspectRatio option).
-        story.append(Image(str(LOGO_PATH), width=3.4 * cm, height=3.4 * cm * 890 / 1115, hAlign="LEFT"))
-        story.append(Spacer(1, 0.3 * cm))
-    story.append(Paragraph("DATANOVA", styles["H1Brand"]))
-    story.append(Paragraph("Synthetic Data Evaluation Report", styles["H3Brand"]))
-    story.append(Spacer(1, 0.2 * cm))
-    story.append(Paragraph(
-        f"Project: <b>{project.get('name', 'Unnamed project')}</b> · "
-        f"Author: {AUTHOR} · "
-        f"Generated {datetime.now().strftime('%Y-%m-%d %H:%M')}",
-        styles["Small"]))
+        # logo_trimmed.png is 1115x890; keep the box on that aspect ratio so
+        # the mark is never stretched (platypus Image has no preserveAspectRatio).
+        logo_cell = Image(str(LOGO_PATH), width=2.4 * cm, height=2.4 * cm * 890 / 1115)
+    brand_row = Table(
+        [[logo_cell, [Paragraph("DataNova", styles["H1Brand"]),
+                      Paragraph("Synthetic Data Studio", styles["H3Brand"])]]],
+        colWidths=[3.0 * cm, _CONTENT_W - 3.0 * cm], hAlign="LEFT",
+    )
+    brand_row.setStyle(TableStyle([
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("LEFTPADDING", (0, 0), (0, 0), 0),
+        ("RIGHTPADDING", (0, 0), (0, 0), 6),
+    ]))
+    story.append(brand_row)
+    story.append(Spacer(1, 0.5 * cm))
+    story.append(Paragraph("PROJECT REPORT", styles["H1Brand"]))
+    story.append(Spacer(1, 0.35 * cm))
+    story.append(_info_table([
+        ["Project name", str(project.get("name", "Unnamed project"))],
+        ["Date", datetime.now().strftime("%Y-%m-%d %H:%M")],
+        ["Generation mode", mode_label],
+    ]))
     story.append(Spacer(1, 0.35 * cm))
 
     # 1. Overview
     story.append(Paragraph("1. Overview", styles["H2Brand"]))
     story.append(_info_table([
         ["Project name", str(project.get("name", "—"))],
-        ["Author", AUTHOR],
         ["Created", str(project.get("created_at", "—"))],
         ["Generation mode", mode_label],
         ["Source dataset", str(project.get("dataset_filename") or "— (generated from requirements)")],
@@ -717,19 +726,44 @@ def generate_report(project: Dict[str, Any], out_path: Path) -> Path:
     ]:
         story.append(Paragraph(f"• {line}", styles["Body"]))
 
-    # 10. Files & exports
-    story.append(Paragraph("10. Files & exports", styles["H2Brand"]))
+    # 10. Messy data configuration (only when a messy dataset was generated)
+    messy_file_name = project.get("messy_file")
+    messy_info = project.get("messy") or {}
+    files_num = 10
+    if messy_file_name:
+        files_num = 11
+        story.append(Paragraph("10. Messy data configuration", styles["H2Brand"]))
+        counts = messy_info.get("counts") or {}
+        req = messy_info.get("requested") or {}
+        story.append(_info_table([
+            ["Requested messiness",
+             ", ".join(f"{k.replace('_', ' ')} {v}%" for k, v in req.items() if v) or "—"],
+            ["Missing cells introduced", str(counts.get("missing_values", messy_info.get("missing_cells_actual", 0)))],
+            ["Duplicate rows added", str(counts.get("duplicate_rows", messy_info.get("duplicate_rows_added", 0)))],
+            ["Whitespace inconsistencies", str(counts.get("whitespace", 0))],
+            ["Capitalization inconsistencies", str(counts.get("capitalization", 0))],
+            ["Format inconsistencies", str(counts.get("format_inconsistencies", 0))],
+            ["Invalid/noisy values", str(counts.get("invalid_values", 0))],
+            ["Outliers introduced", str(counts.get("outliers", 0))],
+            ["Messy dataset file", str(messy_file_name)],
+        ]))
+        story.append(Paragraph(
+            "The messy dataset is a separate copy — the clean synthetic dataset above is unchanged.",
+            styles["Caption"]))
+
+    # 11 (or 10). Files & exports
+    story.append(Paragraph(f"{files_num}. Files & exports", styles["H2Brand"]))
     synth_file_name = synth_preview.get("file") if isinstance(synth_preview, dict) else None
     story.append(_info_table([
         ["Synthetic dataset (CSV)", str(synth_file_name or "not saved with this project")],
+        ["Messy dataset (CSV)", str(messy_file_name) + " (separate copy; clean data unchanged)" if messy_file_name else "not generated"],
         ["This report (PDF)", Path(out_path).name],
         ["DataNova Score disclaimer", "Project-defined weighted metric — not an industry standard."],
-        ["Author", AUTHOR],
     ]))
 
     story.append(Spacer(1, 0.5 * cm))
     story.append(Paragraph(
-        f"DataNova v{APP_VERSION} · Synthetic Data Studio · Author: {AUTHOR} · "
+        f"DataNova v{APP_VERSION} · Synthetic Data Studio · "
         f"report generated from stored project results · "
         f"{datetime.now().strftime('%Y-%m-%d %H:%M')}",
         styles["Small"]))
@@ -742,7 +776,7 @@ def generate_report(project: Dict[str, Any], out_path: Path) -> Path:
         canvas.rect(0, PAGE_H - 1.1 * cm, PAGE_W, 1.1 * cm, stroke=0, fill=1)
         canvas.setFillColor(colors.white)
         canvas.setFont("Helvetica-Bold", 8)
-        canvas.drawString(_MARGIN, PAGE_H - 0.72 * cm, "DATANOVA — Synthetic Data Evaluation Report · Author: Nuha Khan")
+        canvas.drawString(_MARGIN, PAGE_H - 0.72 * cm, "DATANOVA — Synthetic Data Evaluation Report")
         if LOGO_MARK_PATH.exists():
             canvas.drawImage(str(LOGO_MARK_PATH), PAGE_W - _MARGIN - 0.85 * cm, PAGE_H - 0.95 * cm,
                              width=0.85 * cm, height=0.85 * cm, preserveAspectRatio=True, mask="auto")

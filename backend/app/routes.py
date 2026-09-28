@@ -31,6 +31,7 @@ from .services import (
     explainability_engine,
     generation_validator,
     ml_utility_engine,
+    messy_data,
     model_recommender,
     report_generator,
     requirement_parser,
@@ -287,9 +288,13 @@ def _postprocess_semantics(df: pd.DataFrame, synthetic: pd.DataFrame,
     # Only format-critical semantic types are rebuilt: SDV already preserves
     # numeric distributions and category pools well, but it cannot guarantee
     # valid NAME/PHONE/PIN/EMAIL formats or Indian place coherence.
-    _REBUILDABLE = {"person_name", "gender", "indian_phone", "email", "address",
-                    "city", "state", "country", "indian_pincode", "date_of_birth",
-                    "customer_id", "company_name", "product_name"}
+    # Only strict-FORMAT semantic types are rebuilt with dedicated generators.
+    # Category-pool columns (gender, city, state, country, names, products...)
+    # are left as SDV sampled them: SDV learned the REAL dataset's own value
+    # pools and their joint distribution, which is more faithful than any
+    # generic generator vocabulary (and preserves city-state coherence).
+    _REBUILDABLE = {"indian_phone", "email", "indian_pincode", "customer_id",
+                    "generic_id", "date_of_birth"}
     for col, info in schema.items():
         if col not in out.columns:
             continue
@@ -297,6 +302,11 @@ def _postprocess_semantics(df: pd.DataFrame, synthetic: pd.DataFrame,
         conf = float(info.get("semantic_confidence") or 0)
         if sem not in _REBUILDABLE or conf < 0.6:
             continue
+        # Numeric identifier-like columns (phones/pincodes/ids stored as
+        # integers) get semantic regeneration too: copula models fit them
+        # poorly (magnitudes drift wildly). The generated values are coerced
+        # back to the original dtype so the column type is preserved.
+        numeric_source = pd.api.types.is_numeric_dtype(df[col])
         gen = semantic_generators.generator_for(sem)
         ctx: Dict[str, Any] = {}
         if sem == "email":
@@ -310,6 +320,9 @@ def _postprocess_semantics(df: pd.DataFrame, synthetic: pd.DataFrame,
             if state_col:
                 ctx["state_series"] = out[state_col].astype(str).tolist()
         out[col] = gen.generate(len(out), rng, ctx)
+        if numeric_source and sem != "date_of_birth":
+            digits = out[col].astype(str).str.replace(r"\D", "", regex=True)
+            out[col] = pd.to_numeric(digits, errors="coerce")
         notes.append(f"Column '{col}' regenerated with the {sem} semantic generator to guarantee valid formats.")
         rebuilt += 1
     return out, notes, rebuilt
@@ -380,6 +393,36 @@ def generate(upload_id: str, body: schemas.GenerateRequest):
             make_more=make_more,
             unique_columns=[],
         )
+
+        # --- source-fidelity gate: did generation actually follow the upload? ---
+        fidelity = sdv_generator.structure_violations(synth, df)
+        retried = False
+        if (fidelity["invented_category_values"] > 0 or fidelity["out_of_range_numeric"] > 0) \
+                and not body.synthesizer and fitted.approach != "GaussianCopula":
+            # Auto-retry ONCE with the structure-preserving fallback (copula).
+            # Only when the user left the synthesizer on Auto.
+            _set_stage("fitting", fallback=True)
+            fitted = sdv_generator.fit_synthesizer(
+                df, exclude_columns=body.exclude_columns,
+                synthesizer_override="GaussianCopula", advanced=body.advanced,
+            )
+            _set_stage("sampling")
+            t_sample0 = time.time()
+            synth = fitted.sample(body.n_rows)
+            sample_seconds = round(time.time() - t_sample0, 1)
+            synth, sem_notes, n_rebuilt = _postprocess_semantics(df, synth, schema, rng)
+
+            def make_more(k: int) -> pd.DataFrame:
+                extra = fitted.sample(k)
+                extra, _, _2b = _postprocess_semantics(df, extra, schema, rng)
+                return extra
+
+            synth, uni_report = uniqueness.enforce_unique_rows(
+                synth, original=df, n_requested=body.n_rows,
+                make_more=make_more, unique_columns=[],
+            )
+            fidelity = sdv_generator.structure_violations(synth, df)
+            retried = True
     except RuntimeError as exc:
         _set_stage("error", detail=str(exc))
         raise HTTPException(status_code=500, detail=str(exc))
@@ -417,6 +460,16 @@ def generate(upload_id: str, body: schemas.GenerateRequest):
             f"{n_rebuilt} semantic column(s) were re-generated with dedicated format-aware generators "
             "(SDV learned their distribution; the generator guarantees valid formats)."
         )
+    if retried:
+        validation_warnings.append(
+            "First generation attempt did not follow the source data closely enough, so DataNova "
+            "automatically regenerated with GaussianCopula (structure-preserving fallback)."
+        )
+    if fidelity["details"]:
+        validation_warnings.append(
+            "Remaining source-fidelity warnings: " + "; ".join(fidelity["details"][:5]) +
+            ". You can regenerate or choose a different synthesizer under generation options."
+        )
 
     return {
         "upload_id": upload_id,
@@ -429,6 +482,7 @@ def generate(upload_id: str, body: schemas.GenerateRequest):
         "validation_warnings": validation_warnings,
         "quality_check": quality,
         "uniqueness": uni_report,
+        "fidelity": fidelity,
         "schema": schema,
         "preview": _jsonify_frame(synth, config.MAX_PREVIEW_ROWS),
         "columns": list(synth.columns),
@@ -440,6 +494,72 @@ def synthetic_preview(upload_id: str, n: int = 20):
     """Preview the stored synthetic dataset."""
     synth = _get_synth(upload_id)
     return {"rows": _jsonify_frame(synth, n), "total_rows": int(len(synth))}
+
+
+# ---------------------------------------------------------------------------
+# Session-level messy data (Mode 1: applied AFTER generation, original kept)
+# ---------------------------------------------------------------------------
+@router.post("/upload/{upload_id}/messy")
+def session_messy(upload_id: str, body: schemas.MessyConfigRequest):
+    """Apply user-specified messiness to the generated synthetic dataset.
+
+    Produces a SEPARATE messy frame; the clean generation stays available for
+    download/evaluation. Actual percentages are reported, not just requested.
+    """
+    synth = _get_synth(upload_id)
+
+    def pct(v: float) -> float:
+        return max(0.0, min(100.0, float(v or 0)))
+
+    cfg = {
+        "missing_values": pct(body.missing_values),
+        "duplicate_rows": pct(body.duplicate_rows),
+        "whitespace": pct(body.whitespace),
+        "capitalization": pct(body.capitalization),
+        "format_inconsistency": pct(body.format_inconsistency),
+        "invalid_values": pct(body.invalid_values),
+        "outliers": pct(body.outliers),
+    }
+    if all(v == 0 for v in cfg.values()):
+        raise HTTPException(status_code=400, detail="Set at least one messiness percentage above 0.")
+    if sum(cfg.values()) > 60:
+        raise HTTPException(status_code=400,
+                            detail="Total messiness above 60% would destroy the dataset; keep the combined total at or below 60%.")
+
+    result = messy_data.make_messy(synth, {k: v / 100.0 for k, v in cfg.items()}, seed=42)
+    messy_df = result["dataframe"]
+    summary = result["summary"]
+
+    # Keep BOTH frames; the messy copy is served under a distinct key.
+    _SYNTHS[f"{upload_id}__messy"] = messy_df
+    _UPLOAD_META[f"{upload_id}__messy"] = {
+        "filename": f"{_UPLOAD_META.get(upload_id, {}).get('filename', 'dataset')} messy copy",
+        "uploaded_at": pd.Timestamp.now().isoformat(),
+    }
+    return {
+        "summary": summary,
+        "actual_percentages": {
+            "missing_values": round(summary["counts"]["missing_values"]
+                                    / max(summary["total_cells"], 1) * 100, 2),
+            "duplicate_rows": round(summary["duplicate_rows_added"]
+                                    / max(summary["original_rows"], 1) * 100, 2),
+        },
+        "preview": _jsonify_frame(messy_df, config.MAX_PREVIEW_ROWS),
+    }
+
+
+@router.get("/upload/{upload_id}/messy/download")
+def session_messy_download(upload_id: str):
+    """Download the messy COPY of the session's synthetic dataset."""
+    key = f"{upload_id}__messy"
+    if key not in _SYNTHS:
+        raise HTTPException(status_code=404, detail="No messy dataset generated for this session yet.")
+    meta = _UPLOAD_META.get(key, {})
+    source_name = str(meta.get("filename") or "dataset").replace(" messy copy", "")
+    stem = re.sub(r"\.csv$", "", source_name, flags=re.IGNORECASE)
+    base = _slugify(stem, "dataset")
+    stamp = pd.Timestamp.now().strftime("%Y%m%d-%H%M")
+    return _df_to_csv_response(_SYNTHS[key], f"{base}-synthetic-messy-{stamp}.csv")
 
 
 # ---------------------------------------------------------------------------
@@ -464,8 +584,13 @@ def _load_pair(body: schemas.EvaluateRequest):
 
 def _load_stored_real(proj: Dict[str, Any]) -> pd.DataFrame:
     """Real frame of a saved project (uploaded CSV or requirement-mode source)."""
+    if proj.get("upload_ref"):
+        path = config.DATA_DIR / "uploads" / f"{proj['upload_ref']}.csv"
+        if path.exists():
+            return pd.read_csv(path)
     if proj.get("dataset_filename"):
-        path = config.DATA_DIR / "uploads" / proj["dataset_filename"]
+        # Legacy projects persisted the source filename directly.
+        path = config.DATA_DIR / "uploads" / str(proj["dataset_filename"])
         if path.exists():
             return pd.read_csv(path)
     # Requirement mode: no real dataset exists; evaluation compares nothing.
@@ -671,8 +796,20 @@ def projects_save(body: schemas.SaveProjectRequest):
         synth_df.to_csv(synth_dir / synth_filename, index=False)
         synth_preview_rows = _jsonify_frame(synth_df, 5)
 
+    # Every project needs a human-readable name (§34): derive one when the
+    # user leaves it blank instead of storing an empty string.
+    project_name = (body.name or "").strip()
+    if not project_name:
+        if body.mode == "requirements":
+            project_name = f"{body.target or 'Custom'} Synthetic Dataset"
+        else:
+            stem = re.sub(r"\.csv$", "", body.dataset_filename or "", flags=re.IGNORECASE).strip()
+            project_name = f"{_slugify(stem, 'dataset').replace('-', ' ').title()} Synthetic Dataset" if stem \
+                else "Untitled Synthetic Dataset"
+
     fields = {
-        "name": body.name,
+        "name": project_name,
+        "upload_ref": body.upload_id if body.mode == "upload" else None,
         "mode": body.mode,
         "dataset_filename": body.dataset_filename,
         "rows_real": body.rows_real,
@@ -765,7 +902,136 @@ def projects_files(project_id: int):
     return {
         "synthetic_csv": {"exists": csv_ok, "file": synth_file},
         "report_pdf": {"exists": report_ok, "generated_at": proj.get("report_generated_at")},
+        "messy_csv": {"exists": bool(proj.get("messy_file")), "file": proj.get("messy_file")},
     }
+
+
+# ---------------------------------------------------------------------------
+# Messy data (Make Data Messy) — user-controlled, original never modified
+# ---------------------------------------------------------------------------
+def _project_synth_frame(project_id: int) -> tuple:
+    """Load the stored synthetic CSV for a project (source for messy data)."""
+    proj = database.get_project(project_id)
+    if not proj:
+        raise HTTPException(status_code=404, detail="Project not found.")
+    preview = proj.get("synth_preview") or {}
+    synth_file = preview.get("file") if isinstance(preview, dict) else None
+    if not synth_file:
+        raise HTTPException(status_code=404, detail="This project has no stored synthetic dataset.")
+    path = config.DATA_DIR / "synthetic" / synth_file
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="Synthetic dataset file missing on disk.")
+    try:
+        df = pd.read_csv(path)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Could not read the stored synthetic dataset: {exc}")
+    return proj, df
+
+
+@router.post("/projects/{project_id}/messy/preview")
+def messy_preview(project_id: int, body: schemas.MessyConfigRequest):
+    """Estimate how many cells/rows each requested messiness type would affect."""
+    proj, df = _project_synth_frame(project_id)
+    rows, cols = df.shape
+    total = rows * cols
+
+    def pct(v: float) -> float:
+        return max(0.0, min(100.0, float(v or 0)))
+
+    cfg = {
+        "missing_values": pct(body.missing_values),
+        "duplicate_rows": pct(body.duplicate_rows),
+        "whitespace": pct(body.whitespace),
+        "capitalization": pct(body.capitalization),
+        "format_inconsistency": pct(body.format_inconsistency),
+        "invalid_values": pct(body.invalid_values),
+        "outliers": pct(body.outliers),
+    }
+    schema = semantic_types.detect_schema(df)
+    textish = {c for c, s in schema.items()
+               if s.get("semantic_type") in ("generic_text", "person_name", "city", "state",
+                                             "country", "address", "email", "indian_phone",
+                                             "category", "product_name", "company_name")}
+    numericish = {c for c, s in schema.items()
+                  if s.get("semantic_type") in ("numerical", "salary", "age")}
+    formatable = {c for c, s in schema.items()
+                  if s.get("semantic_type") in ("indian_phone", "email", "date", "datetime", "date_of_birth")}
+
+    return {
+        "dataset": {"rows": int(rows), "columns": int(cols), "total_cells": int(total),
+                    "filename": (proj.get("synth_preview") or {}).get("file")},
+        "requested_config": cfg,
+        "estimates": {
+            "missing_cells": int(round(total * cfg["missing_values"] / 100)),
+            "duplicate_rows": int(round(rows * cfg["duplicate_rows"] / 100)),
+            "whitespace_cells": int(round(sum(1 for c in textish if c in df.columns) * rows * cfg["whitespace"] / 100)),
+            "capitalization_cells": int(round(sum(1 for c in textish if c in df.columns) * rows * cfg["capitalization"] / 100)),
+            "format_cells": int(round(sum(1 for c in formatable if c in df.columns) * rows * cfg["format_inconsistency"] / 100)),
+            "invalid_cells": int(round(sum(1 for c in numericish if c in df.columns) * rows * cfg["invalid_values"] / 100)),
+            "outlier_cells": int(round(sum(1 for c in numericish if c in df.columns) * rows * cfg["outliers"] / 100)),
+            "text_columns": sorted(textish & set(df.columns)),
+            "numeric_columns": sorted(numericish & set(df.columns)),
+            "formatable_columns": sorted(formatable & set(df.columns)),
+        },
+    }
+
+
+@router.post("/projects/{project_id}/messy")
+def messy_generate(project_id: int, body: schemas.MessyConfigRequest):
+    """Generate the messy COPY of the stored synthetic dataset (original untouched)."""
+    proj, df = _project_synth_frame(project_id)
+
+    def pct(v: float) -> float:
+        return max(0.0, min(100.0, float(v or 0)))
+
+    cfg = {
+        "missing_values": pct(body.missing_values),
+        "duplicate_rows": pct(body.duplicate_rows),
+        "whitespace": pct(body.whitespace),
+        "capitalization": pct(body.capitalization),
+        "format_inconsistency": pct(body.format_inconsistency),
+        "invalid_values": pct(body.invalid_values),
+        "outliers": pct(body.outliers),
+    }
+    if all(v == 0 for v in cfg.values()):
+        raise HTTPException(status_code=400, detail="Set at least one messiness percentage above 0.")
+    if sum(cfg.values()) > 60:
+        raise HTTPException(status_code=400,
+                            detail="Total messiness above 60% would destroy the dataset; keep the combined total at or below 60%.")
+    cfg_fractions = {k: v / 100.0 for k, v in cfg.items()}
+
+    result = messy_data.make_messy(df, cfg_fractions, seed=42)
+    messy_df = result["dataframe"]
+    summary = result["summary"]
+
+    config.ensure_dirs()
+    base = _project_file_base(proj)
+    messy_name = f"{base}-messy.csv"
+    messy_path = config.DATA_DIR / "synthetic" / messy_name
+    messy_df.to_csv(messy_path, index=False)
+
+    summary["file"] = messy_name
+    database.update_project(project_id, {
+        "messy_file": messy_name,
+        "messy_summary": json.dumps(summary, ensure_ascii=False),
+    })
+    return {
+        "file": messy_name,
+        "summary": summary,
+        "preview": _jsonify_frame(messy_df, config.MAX_PREVIEW_ROWS),
+    }
+
+
+@router.get("/projects/{project_id}/messy/download")
+def messy_download(project_id: int):
+    """Download the messy CSV copy (original clean file is never touched)."""
+    proj = database.get_project(project_id)
+    if not proj or not proj.get("messy_file"):
+        raise HTTPException(status_code=404, detail="No messy dataset generated for this project yet.")
+    path = config.DATA_DIR / "synthetic" / proj["messy_file"]
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="Messy dataset file missing on disk.")
+    return FileResponse(path, media_type="text/csv", filename=f"{_project_file_base(proj)}-messy.csv")
 
 
 @router.get("/projects/{project_id}/synthetic/download")

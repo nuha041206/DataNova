@@ -84,33 +84,28 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Hero */}
-      <section className="overflow-hidden rounded-2xl bg-brand-dark p-8 text-white shadow-lg">
+      {/* Hero — light cream surface, dark red reserved for accents */}
+      <section className="overflow-hidden rounded-2xl border bg-brand-cream p-8 shadow-lg">
         <div className="flex flex-wrap items-start justify-between gap-6">
           <div className="max-w-xl">
-            <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-brand-red/30 px-3 py-1 text-xs font-medium text-brand-cream">
+            <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-brand-red/10 px-3 py-1 text-xs font-medium text-brand-red">
               <Sparkles className="h-3.5 w-3.5" /> Synthetic Data Generation &amp; Quality Evaluation
             </div>
-            <h1 className="text-3xl font-bold tracking-tight">
+            <h1 className="text-3xl font-bold tracking-tight text-brand-dark">
               Create useful synthetic datasets, understand their quality.
             </h1>
-            <p className="mt-2 text-sm text-white/70">
+            <p className="mt-2 text-sm text-brand-dark/70">
               Expand an existing dataset with SDV, or describe what you need in plain English — then compare,
               evaluate and export with full transparency.
             </p>
           </div>
-          <img
-            src="/logo.png"
-            alt="DataNova logo"
-            className="hidden h-28 w-28 rounded-2xl bg-white object-contain p-2 lg:block"
-          />
           <div className="flex w-full flex-col gap-3 lg:w-auto">
-            <Button asChild size="lg" className="bg-brand-red text-white hover:bg-[#570606]">
+            <Button asChild size="lg" className="bg-brand-red text-white hover:bg-brand-dark">
               <Link href="/create">
                 <Plus className="h-5 w-5" /> Create New Project
               </Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="border-white/40 bg-transparent text-white hover:bg-white/10 hover:text-white">
+            <Button asChild size="lg" variant="outline" className="border-brand-dark/30 bg-transparent text-brand-dark hover:bg-brand-red/10 hover:text-brand-dark">
               <Link href="/projects">
                 <ArrowRight className="h-5 w-5" /> View History
               </Link>

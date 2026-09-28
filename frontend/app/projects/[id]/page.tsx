@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { EvaluationView } from "@/components/workflow/evaluation-view";
+import { MessyDataPanel } from "@/components/projects/messy-data-panel";
 import { api } from "@/lib/api";
 import type { ProjectDetail, ProjectFiles } from "@/lib/types";
 
@@ -106,6 +107,20 @@ export default function ProjectDetailPage() {
               </span>
             </div>
             <div className="flex items-center gap-2">
+              {files?.messy_csv.exists ? (
+                <CircleCheck className="h-4 w-4 text-brand-red" />
+              ) : (
+                <FileX2 className="h-4 w-4 text-muted-foreground" />
+              )}
+              <FileSpreadsheet className="h-4 w-4 text-muted-foreground" />
+              <span>
+                Messy dataset — {" "}
+                {files?.messy_csv.exists
+                  ? files.messy_csv.file
+                  : "not generated (use Make Data Messy below)"}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
               {files?.report_pdf.exists ? (
                 <CircleCheck className="h-4 w-4 text-brand-red" />
               ) : (
@@ -166,6 +181,8 @@ export default function ProjectDetailPage() {
             </CardContent>
           </Card>
         )}
+
+        {files?.synthetic_csv.exists && <MessyDataPanel projectId={project.id} />}
 
         {project.analysis && (
           <Card>
@@ -245,6 +262,11 @@ export default function ProjectDetailPage() {
           <Button variant="outline" onClick={() => api.downloadProjectCsv(project.id)} disabled={!project.rows_synthetic}>
             <FileDown className="h-4 w-4" /> Synthetic CSV
           </Button>
+          {project.has_messy && (
+            <Button variant="outline" onClick={() => api.downloadMessyCsv(project.id)}>
+              <FileDown className="h-4 w-4" /> Messy CSV
+            </Button>
+          )}
           {project.has_report ? (
             <Button onClick={() => api.downloadReport(project.id)}>
               <FileText className="h-4 w-4" /> Download PDF report

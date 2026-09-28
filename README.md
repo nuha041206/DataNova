@@ -68,9 +68,8 @@ datanova/
 
 1. **Dashboard** (`/`) — live stats, the two generation modes, recent projects.
 2. **New Project** (`/create`) — pick a mode: *Expand an Existing Dataset* or *Generate From Requirements*.
-3. **Project History** (`/projects`) — every workflow saved **on this computer**, with results, CSV/PDF downloads and delete.
-4. **Settings** (`/settings`) — General / Data & storage / Connection / Application cards.
-5. **Methodology & About** (`/about`) — visual workflow, methodology, ML-utility experiments, score components, limitations and tech stack.
+3. **Project History** (`/projects`) — every workflow saved **on this computer**, with results, CSV/PDF downloads, rename and delete.
+4. **Methodology & About** (`/about`) — visual workflow, methodology, ML-utility experiments, score components, limitations and tech stack.
 
 **Workflow** (guided steps shown at the top of each page):
 

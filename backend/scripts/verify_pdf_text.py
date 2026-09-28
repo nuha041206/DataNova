@@ -155,15 +155,17 @@ def main() -> None:
         add("experiment labels", "real-trained")
         add("experiment labels 2", "synthetic-trained")
 
-    # branding, author, mode label, 10-section structure
-    add("author line", "Nuha Khan")
+    # branding, mode label, section structure
     add("brand line", "Synthetic Data Studio")
+    add("project report cover", "PROJECT REPORT")
     mode = proj.get("mode")
     if mode == "upload":
         add("mode label", "Expanded Dataset (Mode A)")
     elif mode == "requirements":
         add("mode label", "From Requirements (Mode B)")
-    add("files section", "10. Files & exports")
+    if proj.get("messy_file"):
+        add("messy section", "10. Messy data configuration")
+        add("messy file named", str(proj.get("messy_file")))
     add("overview section", "1. Overview")
     add("no academic wording", "academic", require=False)
     add("no TY BSc wording", "TY BSc", require=False)

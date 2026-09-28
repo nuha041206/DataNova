@@ -14,7 +14,6 @@ import {
   FileText,
   FlaskConical,
   GitCompareArrows,
-  ListChecks,
   Scale,
   Target,
   TriangleAlert,
@@ -93,9 +92,9 @@ export default function AboutPage() {
       <section className="space-y-4">
         <div className="flex flex-wrap items-center gap-4">
           <img
-            src="/logo.png"
+            src="/logo_mark.png"
             alt="DataNova logo"
-            className="h-16 w-16 rounded-xl bg-white object-contain shadow-sm ring-1 ring-border"
+            className="h-12 w-12 object-contain"
           />
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Methodology &amp; About</h1>
@@ -287,11 +286,6 @@ export default function AboutPage() {
           DataNova — Synthetic Data Studio · Author: Nuha Khan
         </p>
         <div className="flex gap-2">
-          <Button asChild variant="outline" size="sm">
-            <Link href="/settings">
-              <ListChecks className="h-4 w-4" /> Settings
-            </Link>
-          </Button>
           <Button asChild size="sm">
             <Link href="/create">
               <FileText className="h-4 w-4" /> Create a project

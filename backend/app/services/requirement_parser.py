@@ -253,10 +253,18 @@ def _extract_columns(text: str) -> List[Dict[str, Any]]:
         for stop in (" the target", " target should", " and the target", " where", " such that"):
             if stop in chunk:
                 chunk = chunk.split(stop)[0]
+        # Strip numeric-range phrases so "age between 18 and 65" / "age from
+        # 18 to 65" yield the column 'age' instead of junk columns '18', '65'.
+        chunk = re.sub(r"\b(?:between|from)\s+\d{1,9}\s+(?:and|to|\u2013)\s+\d{1,9}\b", " ", chunk)
+        chunk = re.sub(r"\b\d{1,9}\s*(?:-|to|\u2013)\s*\d{1,9}\b", " ", chunk)
         parts = re.split(r",| and | & ", chunk)
         for part in parts:
             part = part.strip(" .")
             part = re.sub(r"^(the|a|an|of|with|for|their)\s+", "", part)
+            # Skip row-count fragments ("3000 rows") and bare numbers — these
+            # are dataset size statements, not column requests.
+            if re.fullmatch(r"[\d, .\s]*(?:rows?|records?|entries?|samples?)?", part or " "):
+                continue
             if part and 1 < len(part) < 40 and part not in ("etc", "e.g"):
                 # skip value-list fragments already captured in pass 1
                 if re.search(r"values?\s*(?:such as|like|including|:)", part):

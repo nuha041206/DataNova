@@ -135,6 +135,17 @@ class RenameRequest(BaseModel):
     name: str
 
 
+class MessyConfigRequest(BaseModel):
+    """User-controlled messiness, as PERCENTAGES (0-100). All optional; default 0."""
+    missing_values: float = 0.0
+    duplicate_rows: float = 0.0
+    whitespace: float = 0.0
+    capitalization: float = 0.0
+    format_inconsistency: float = 0.0
+    invalid_values: float = 0.0
+    outliers: float = 0.0
+
+
 class ReportRequest(BaseModel):
     """Reserved for future report options (e.g. sections to include)."""
     include_sections: Optional[List[str]] = None

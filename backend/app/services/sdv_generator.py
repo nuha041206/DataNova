@@ -48,6 +48,35 @@ def build_metadata(df: pd.DataFrame, exclude_columns: Optional[List[str]] = None
     work = df.drop(columns=[c for c in exclude if c in df.columns])
     metadata = Metadata.detect_from_dataframes({"table": work})
 
+    # SDV auto-detects columns NAMED like known PII types (City, State, Name,
+    # Email, Phone, ...) as its built-in Faker-backed sdtypes, which would
+    # invent brand-new fake values ("Abigailhaven", "Alabama") instead of
+    # reusing the categories that actually exist in the uploaded dataset.
+    # Fix at the source: closed-set string columns become plain categoricals
+    # (so SDV learns the REAL value pool), and numeric columns stay numerical
+    # (so a numeric phone column keeps its dtype).
+    _NAME_PII_SDTYPES = {"city", "state", "country", "name", "first_name", "last_name",
+                         "email", "phone_number", "address", "street_address",
+                         "administrative_unit", "zipcode", "date_of_birth"}
+    try:
+        table_cols = metadata.tables["table"].columns
+        for col in list(table_cols):
+            try:
+                sdtype = table_cols[col].get("sdtype")
+            except AttributeError:
+                sdtype = table_cols[col]["sdtype"]
+            if sdtype in _NAME_PII_SDTYPES:
+                series = work[col]
+                if pd.api.types.is_numeric_dtype(series):
+                    metadata.update_column(table_name="table", column_name=col, sdtype="numerical")
+                else:
+                    nunique = int(series.nunique(dropna=True))
+                    if nunique <= 200 and nunique <= 0.5 * max(len(series), 1):
+                        metadata.update_column(table_name="table", column_name=col, sdtype="categorical")
+    except Exception:
+        # Metadata API differs across SDV versions; detection fix is best-effort.
+        pass
+
     # Mark a unique non-numeric column as an id column (helps SDV produce
     # valid unique values instead of copying real ones).
     try:
@@ -84,28 +113,63 @@ def choose_synthesizer(df: pd.DataFrame, override: Optional[str] = None) -> Dict
     has_datetime = any(_infer_semantic_type(df[c]) == "datetime" for c in df.columns)
     n_numeric = sum(1 for c in df.columns if _infer_semantic_type(df[c]) == "numerical")
     n_cat = sum(1 for c in df.columns if _infer_semantic_type(df[c]) == "categorical")
+    # High-cardinality categoricals make CTGAN's one-hot space explode while
+    # the copula models them fine as marginal distributions.
+    max_cat_card = max((int(df[c].nunique(dropna=True)) for c in df.columns
+                        if _infer_semantic_type(df[c]) == "categorical"), default=0)
 
-    if n_rows < 2000 or missing_ratio > 0.2 or has_datetime:
-        reasons = [f"dataset has {n_rows} rows"]
-        if missing_ratio > 0.2:
-            reasons.append(f"{missing_ratio:.0%} of cells are missing")
-        if has_datetime:
-            reasons.append("datetime column(s) are present")
+    reasons = []
+    if n_rows < 2000:
+        reasons.append(f"small dataset ({n_rows} rows)")
+    if missing_ratio > 0.2:
+        reasons.append(f"{missing_ratio:.0%} of cells are missing")
+    if has_datetime:
+        reasons.append("datetime column(s) are present")
+
+    if reasons or max_cat_card > 50:
+        if max_cat_card > 50 and not reasons:
+            reasons.append(f"a categorical column has {max_cat_card} distinct values")
         return {
             "synthesizer": "GaussianCopula",
             "reason": (
-                f"GaussianCopula was selected because {'; '.join(reasons)}. "
-                "It is fast, statistically transparent and reliable on smaller datasets."
+                f"GaussianCopula was selected because {'; '.join(reasons)}. It models each column's "
+                "distribution and the correlations between numeric columns, is fast, and is the "
+                "most reliable choice for preserving the structure of the uploaded data."
             ),
+            "dataset_profile": {
+                "rows": n_rows, "columns": n_cols, "numeric": n_numeric,
+                "categorical": n_cat, "max_categorical_cardinality": max_cat_card,
+                "missing_ratio": round(missing_ratio, 3),
+            },
+        }
+
+    if n_rows <= 20_000 and n_cat >= n_numeric:
+        return {
+            "synthesizer": "TVAE",
+            "reason": (
+                f"TVAE was selected because the dataset has {n_rows} rows with {n_cat} categorical vs "
+                f"{n_numeric} numerical columns: autoencoder-based synthesis handles mixed categorical "
+                "data well at this scale while training faster than CTGAN."
+            ),
+            "dataset_profile": {
+                "rows": n_rows, "columns": n_cols, "numeric": n_numeric,
+                "categorical": n_cat, "max_categorical_cardinality": max_cat_card,
+                "missing_ratio": round(missing_ratio, 3),
+            },
         }
 
     return {
         "synthesizer": "CTGAN",
         "reason": (
             f"CTGAN was selected because the dataset has {n_rows} rows with "
-            f"{n_numeric} numerical and {n_cat} categorical columns. CTGAN models "
-            "complex non-linear relationships well at this scale."
+            f"{n_numeric} numerical and {n_cat} categorical columns of moderate cardinality. "
+            "CTGAN models complex non-linear relationships well at this scale."
         ),
+        "dataset_profile": {
+            "rows": n_rows, "columns": n_cols, "numeric": n_numeric,
+            "categorical": n_cat, "max_categorical_cardinality": max_cat_card,
+            "missing_ratio": round(missing_ratio, 3),
+        },
     }
 
 
@@ -145,6 +209,57 @@ class FittedSynthesizer:
             if col in self.source.columns and col not in synthetic.columns:
                 synthetic[col] = [f"SYN{i + 1:06d}" for i in range(len(synthetic))]
         return synthetic
+
+
+def structure_violations(synthetic: pd.DataFrame, source: pd.DataFrame) -> Dict[str, Any]:
+    """Compare a synthetic frame against the SOURCE dataset's own structure.
+
+    Catches the failure mode where generation 'completed' but the data does
+    not follow the upload: invented categories, out-of-range numerics, or a
+    frame that is mostly duplicates. Returns counts the generate endpoint can
+    use to decide on a fallback retry — and the UI can show honestly.
+    """
+    violations: Dict[str, Any] = {
+        "invented_category_values": 0,
+        "out_of_range_numeric": 0,
+        "duplicate_rate": 0.0,
+        "details": [],
+    }
+    if synthetic is None or synthetic.empty:
+        violations["details"].append("no data generated")
+        return violations
+
+    for col in source.columns:
+        if col not in synthetic.columns:
+            continue
+        s_src, s_syn = source[col], synthetic[col]
+        if pd.api.types.is_numeric_dtype(s_src):
+            lo, hi = float(s_src.min()), float(s_src.max())
+            span = (hi - lo) or 1.0
+            # Allow 10% margin beyond the observed range (generation may
+            # legitimately extrapolate slightly; wild magnitudes fail).
+            tol = span * 0.10
+            nums = pd.to_numeric(s_syn, errors="coerce").dropna()
+            bad = int(((nums < lo - tol) | (nums > hi + tol)).sum())
+            if bad:
+                violations["out_of_range_numeric"] += bad
+                violations["details"].append(
+                    f"'{col}': {bad} value(s) outside the source range [{lo:.2f}, {hi:.2f}]")
+        else:
+            pool = set(s_src.dropna().astype(str).unique())
+            if 1 < len(pool) <= 200:
+                extra = set(s_syn.dropna().astype(str).unique()) - pool
+                if extra:
+                    violations["invented_category_values"] += len(extra)
+                    violations["details"].append(
+                        f"'{col}': {len(extra)} value(s) not present in the source "
+                        f"(e.g. {sorted(extra)[:3]})")
+
+    violations["duplicate_rate"] = round(float(synthetic.duplicated().mean()), 4)
+    if violations["duplicate_rate"] > 0.5:
+        violations["details"].append(
+            f"{violations['duplicate_rate']:.0%} of rows are duplicates of each other")
+    return violations
 
 
 def fit_synthesizer(df: pd.DataFrame, exclude_columns: Optional[List[str]] = None,
