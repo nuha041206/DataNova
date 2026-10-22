@@ -15,8 +15,9 @@ import time
 
 import io
 import json
+import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -53,6 +54,8 @@ _UPLOAD_META: Dict[str, Dict[str, Any]] = {}
 # Live generation progress per upload id, polled by the frontend via
 # GET /upload/{id}/generation-status while POST /generate is running.
 _GEN_STATUS: Dict[str, Dict[str, Any]] = {}
+
+_logger = logging.getLogger("datanova.routes")
 
 _UPLOAD_LOCKS: Dict[str, threading.Lock] = {}
 
@@ -345,6 +348,12 @@ def generate(upload_id: str, body: schemas.GenerateRequest):
     if body.n_rows > config.MAX_ROWS_FULL_GENERATION:
         raise HTTPException(status_code=400,
                             detail=f"n_rows is capped at {config.MAX_ROWS_FULL_GENERATION:,} for resource safety.")
+    excluded = [c for c in (body.exclude_columns or []) if c in df.columns]
+    if len(excluded) >= df.shape[1]:
+        raise HTTPException(
+            status_code=400,
+            detail="Every column is excluded, so there is nothing left to generate from. "
+                   "Keep at least one column.")
 
     lock = _upload_lock(upload_id)
     if not lock.acquire(blocking=False):
@@ -429,6 +438,12 @@ def generate(upload_id: str, body: schemas.GenerateRequest):
     except HTTPException:
         _set_stage("error", detail="Generation failed.")
         raise
+    except Exception as exc:
+        # any other failure (bad parameters, unexpected state) still gets a
+        # clear message through the existing error format, plus a server log
+        _logger.exception("Generation failed for upload %s", upload_id)
+        _set_stage("error", detail=f"Generation failed: {exc}")
+        raise HTTPException(status_code=500, detail=f"Generation failed: {exc}")
     finally:
         lock.release()
 
@@ -661,7 +676,11 @@ def parse_requirements(body: schemas.ParseRequest):
     """Tell DataNova What You Want: free text -> structured spec + clarifications."""
     if not body.text or not body.text.strip():
         raise HTTPException(status_code=400, detail="Please describe the dataset you want.")
-    spec = requirement_parser.parse_requirements(body.text)
+    try:
+        spec = requirement_parser.parse_requirements(body.text)
+    except ValueError as exc:
+        # gibberish / uninterpretable prompt -> clear validation message
+        raise HTTPException(status_code=400, detail=str(exc))
     return {"spec": requirement_parser.spec_to_dict(spec)}
 
 

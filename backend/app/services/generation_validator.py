@@ -21,6 +21,10 @@ _PHONE_RE = re.compile(r"^[6-9]\d{9}$")
 _PIN_RE = re.compile(r"^[1-9]\d{5}$")
 _EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[a-zA-Z]{2,}$")
 
+# Semantic types whose values must be real dates (generated as ISO text)
+_DATE_SEMANTICS = {"date_of_birth", "date", "datetime"}
+_DATE_SAMPLE = 10_000          # cap the parse cost on very large frames
+
 _SEMANTIC_FORMATS = {
     "indian_phone": _PHONE_RE,
     "indian_pincode": _PIN_RE,
@@ -97,6 +101,9 @@ def validate_generation(
         if tech and actual != tech:
             compatible = {("integer", "float"), ("float", "integer"), ("string", "categorical"),
                           ("categorical", "string")}
+            # date/datetime columns are generated as ISO TEXT, which is valid
+            if tech in _DATE_SEMANTICS and actual in ("string", "categorical"):
+                compatible.add((actual, tech))
             if (actual, tech) not in compatible:
                 dtype_violations += 1
                 add(f"Type of '{col}'", False, f"expected {tech}, got {actual}")
@@ -110,6 +117,16 @@ def validate_generation(
             add(f"Format of '{col}'", bad == 0,
                 f"{bad} invalid {sem.replace('_', ' ')} value(s)" if bad
                 else f"all {len(vals):,} values valid {sem.replace('_', ' ')} format")
+
+        # date columns must hold real dates, not just any text
+        if (sem in _DATE_SEMANTICS or tech in _DATE_SEMANTICS) and not fmt:
+            vals = s.dropna().astype(str).head(_DATE_SAMPLE)
+            if len(vals):
+                bad = int(pd.to_datetime(vals, errors="coerce", format="mixed").isna().sum())
+                format_violations += bad
+                add(f"Format of '{col}'", bad == 0,
+                    f"{bad} invalid date value(s)" if bad
+                    else f"all {len(vals):,} values are valid dates")
 
         # requested range
         if spec.get("min") is not None or spec.get("max") is not None:

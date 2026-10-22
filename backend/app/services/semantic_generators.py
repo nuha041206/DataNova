@@ -18,7 +18,7 @@ assembled from common street patterns, NOT real locations.
 from __future__ import annotations
 
 import random
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 # ---------------------------------------------------------------------------
 # Value pools (small, clearly synthetic, India-focused)
@@ -93,6 +93,27 @@ _STATE_PIN_PREFIX: Dict[str, List[str]] = {
 }
 
 _MOBILE_PREFIXES = [9, 8, 7, 6]  # valid Indian mobile starting digits
+# Indian mobile numbers are 6-9 followed by a 5-9 series digit; weighted to
+# the most commonly issued prefixes.
+_MOBILE_SECOND = [9, 9, 9, 8, 8, 7, 7, 6, 6, 5]
+
+
+def _looks_fake(value: str) -> bool:
+    """Reject phone numbers that are obviously synthetic patterns."""
+    if len(set(value)) <= 2:                     # 9999999999, 9595959595
+        return True
+    if value[2:] == "0" * 8:                     # 9500000000
+        return True
+    for step, limit in ((0, 4), (1, 5), (-1, 5)):   # 9877771234 / 9012345678 / 9876543210
+        run = 1
+        for i in range(1, len(value)):
+            if ord(value[i]) - ord(value[i - 1]) == step:
+                run += 1
+                if run >= limit:
+                    return True
+            else:
+                run = 1
+    return False
 
 
 # ---------------------------------------------------------------------------
@@ -105,6 +126,44 @@ class SemanticGenerator:
 
     def generate(self, n: int, rng: random.Random, context: Optional[Dict[str, Any]] = None) -> List[Any]:
         raise NotImplementedError
+
+
+def _bounds(ctx: Dict[str, Any], default_lo: Any, default_hi: Any) -> Tuple[Any, Any]:
+    """
+    Read min/max from a column context defensively.
+
+    Values may arrive reversed ("between 65 and 18") or empty; swapping or
+    clamping here keeps a bad range from crashing generation with a low-level
+    random/TypeError.
+    """
+    lo = ctx.get("min")
+    hi = ctx.get("max")
+    lo = type(default_lo)(lo) if lo is not None else default_lo
+    hi = type(default_hi)(hi) if hi is not None else default_hi
+    if lo > hi:
+        lo, hi = hi, lo
+    return lo, hi
+
+
+def _dist_split(dist: Optional[Dict[str, Any]], pool: List[str]) -> Tuple[List[str], List[float]]:
+    """
+    Turn a requested skew into (categories, weights).
+
+    {"Maharashtra": 60} means "60% of the rows, the rest a realistic mix" —
+    not "100% Maharashtra" (which is what a single weight would give). Two or
+    more entries, or a value >= 100, are treated as relative weights.
+    """
+    items = [(str(k), float(v)) for k, v in (dist or {}).items() if v is not None]
+    if not items:
+        raise ValueError("empty distribution")
+    if len(items) == 1 and 0 < items[0][1] < 100:
+        key, pct = items[0]
+        others = [v for v in pool if v != key][:5]
+        if not others:
+            return [key], [100.0]
+        share = (100.0 - pct) / len(others)
+        return [key] + others, [pct] + [share] * len(others)
+    return [k for k, _ in items], [v for _, v in items]
 
 
 class NameGenerator(SemanticGenerator):
@@ -131,17 +190,35 @@ class GenderGenerator(SemanticGenerator):
     semantic_type = "gender"
 
     def generate(self, n, rng, context=None):
-        cats = (context or {}).get("categories") or ["Male", "Female", "Other"]
-        weights = (context or {}).get("weights")
+        ctx = context or {}
+        cats = ctx.get("categories") or ["Male", "Female", "Other"]
+        weights = ctx.get("weights")
+        dist = ctx.get("distribution")
+        if dist:  # e.g. {"Male": 60} -> 60% Male, rest a realistic mix
+            cats, weights = _dist_split(dist, cats)
         return rng.choices(cats, weights=weights, k=n)
 
 
 class PhoneGenerator(SemanticGenerator):
-    """Valid-looking Indian 10-digit mobile numbers (starts 6-9)."""
+    """
+    Valid Indian 10-digit mobile numbers: 6-9 first digit, 5-9 series digit,
+    and no obviously fake patterns (repeated digits, ascending/descending runs,
+    all-zero tails).
+    """
     semantic_type = "indian_phone"
 
     def generate(self, n, rng, context=None):
-        return [f"{rng.choice(_MOBILE_PREFIXES)}{rng.randint(0, 999999999):09d}" for _ in range(n)]
+        out: List[Any] = []
+        attempts = 0
+        limit = max(n * 50, 500)          # bounded; realistic numbers are cheap
+        while len(out) < n and attempts < limit:
+            attempts += 1
+            value = f"{rng.choice(_MOBILE_PREFIXES)}{rng.choice(_MOBILE_SECOND)}" \
+                    f"{rng.randint(0, 99999999):08d}"
+            if attempts < limit and _looks_fake(value):
+                continue
+            out.append(value)
+        return out
 
 
 class PincodeGenerator(SemanticGenerator):
@@ -175,8 +252,10 @@ class EmailGenerator(SemanticGenerator):
         out: List[Any] = []
         for i in range(n):
             base = names[i] if names is not None else rng.choice(_FIRST_NAMES)
-            slug = base.lower().replace(" ", ".").replace("..", ".")
-            slug = "".join(ch for ch in slug if ch.isalpha() or ch == ".")
+            slug = str(base).lower().replace(" ", ".").replace("..", ".")
+            slug = "".join(ch for ch in slug if ch.isalpha() or ch == ".").strip(".")
+            if not slug:
+                slug = "user"
             out.append(f"{slug}{rng.randint(1, 999)}@{rng.choice(domains)}")
         return out
 
@@ -205,17 +284,23 @@ class CityGenerator(SemanticGenerator):
     semantic_type = "city"
 
     def generate(self, n, rng, context=None):
-        state_series = (context or {}).get("state_series")
+        ctx = context or {}
+        state_series = ctx.get("state_series")
         if state_series is not None:
+            # state <-> city coherence wins over a requested city mix
             states = list(_STATE_CITIES.keys())
             return [
                 rng.choice(_STATE_CITIES.get(state_series[i], _STATE_CITIES[states[i % len(states)]]))
                 for i in range(n)
             ]
-        pool = (context or {}).get("categories")
+        pool = ctx.get("categories")
+        all_cities = [c for cities in _STATE_CITIES.values() for c in cities]
+        dist = ctx.get("distribution")  # e.g. {"Mumbai": 60}
+        if dist:
+            cats, weights = _dist_split(dist, pool or all_cities)
+            return rng.choices(cats, weights=weights, k=n)
         if pool:
             return rng.choices(pool, k=n)
-        all_cities = [c for cities in _STATE_CITIES.values() for c in cities]
         return [rng.choice(all_cities) for _ in range(n)]
 
 
@@ -225,11 +310,11 @@ class StateGenerator(SemanticGenerator):
 
     def generate(self, n, rng, context=None):
         dist = (context or {}).get("distribution")  # {"Maharashtra": 60}
+        pool = list(_STATE_CITIES.keys())
         if dist:
-            states = list(dist.keys())
-            weights = list(dist.values())
-            return rng.choices(states, weights=weights, k=n)
-        return rng.choices(list(_STATE_CITIES.keys()), k=n)
+            cats, weights = _dist_split(dist, pool)
+            return rng.choices(cats, weights=weights, k=n)
+        return rng.choices(pool, k=n)
 
 
 class CountryGenerator(SemanticGenerator):
@@ -248,8 +333,8 @@ class AgeGenerator(SemanticGenerator):
 
     def generate(self, n, rng, context=None):
         ctx = context or {}
-        lo = int(ctx.get("min") if ctx.get("min") is not None else 18)
-        hi = int(ctx.get("max") if ctx.get("max") is not None else 65)
+        lo, hi = _bounds(ctx, 18, 65)
+        lo, hi = int(lo), int(hi)
         # Triangular-ish distribution centred in the range (more realistic
         # than uniform, still fully within bounds).
         mid = (lo + hi) / 2
@@ -264,8 +349,10 @@ class SalaryGenerator(SemanticGenerator):
     def generate(self, n, rng, context=None):
         ctx = context or {}
         age_series = ctx.get("age_series")
-        lo = float(ctx.get("min") if ctx.get("min") is not None else 200000)
-        hi = float(ctx.get("max") if ctx.get("max") is not None else 2500000)
+        lo, hi = _bounds(ctx, 200000.0, 2500000.0)
+        # Round to a realistic step that still varies inside the range, and
+        # clamp so rounding can never leave the requested bounds.
+        step = 1000.0 if (hi - lo) >= 200000 else (100.0 if (hi - lo) >= 2000 else 1.0)
         out: List[Any] = []
         for i in range(n):
             base = rng.uniform(0.15, 1.0)
@@ -274,7 +361,8 @@ class SalaryGenerator(SemanticGenerator):
                 norm = (float(age_series[i]) - 18) / 47.0
                 base = min(1.0, base * 0.6 + norm * 0.55)
             val = lo + base * (hi - lo)
-            out.append(round(val, -3))  # round to nearest 1000
+            val = round(val / step) * step
+            out.append(min(max(val, lo), hi))
         return out
 
 
@@ -284,8 +372,7 @@ class CurrencyGenerator(SemanticGenerator):
 
     def generate(self, n, rng, context=None):
         ctx = context or {}
-        lo = float(ctx.get("min") if ctx.get("min") is not None else 100)
-        hi = float(ctx.get("max") if ctx.get("max") is not None else 100000)
+        lo, hi = _bounds(ctx, 100.0, 100000.0)
         vals = [round(rng.uniform(lo, hi), 2) for _ in range(n)]
         return vals
 
@@ -296,24 +383,33 @@ class PercentageGenerator(SemanticGenerator):
     def generate(self, n, rng, context=None):
         ctx = context or {}
         as_fraction = bool(ctx.get("fraction", False))
-        lo = float(ctx.get("min") if ctx.get("min") is not None else 0)
-        hi = float(ctx.get("max") if ctx.get("max") is not None else (100 if not as_fraction else 1))
+        lo, hi = _bounds(ctx, 0.0, (1.0 if as_fraction else 100.0))
         return [round(rng.uniform(lo, hi), 3) for _ in range(n)]
 
 
 class DateOfBirthGenerator(SemanticGenerator):
-    """Dates of birth consistent with a requested age range."""
+    """
+    Dates of birth consistent with a requested age range — or, when an age
+    column is present, with each row's actual age so the two columns agree.
+    """
     semantic_type = "date_of_birth"
 
     def generate(self, n, rng, context=None):
         from datetime import date, timedelta
         ctx = context or {}
-        lo = int(ctx.get("min", 18))
-        hi = int(ctx.get("max", 65))
-        today = date(2026, 1, 1)
+        age_series = ctx.get("age_series")
+        explicit_range = ctx.get("min") is not None or ctx.get("max") is not None
+        lo, hi = _bounds(ctx, 18, 65)
+        lo, hi = int(lo), int(hi)
+        today = date.today()
         out: List[Any] = []
-        for _ in range(n):
-            age = rng.triangular(lo, hi, (lo + hi) / 2)
+        for i in range(n):
+            if age_series is not None:
+                age = int(float(age_series[i]))
+                if explicit_range:
+                    age = min(max(age, lo), hi)
+            else:
+                age = int(rng.triangular(lo, hi, (lo + hi) / 2))
             born = today - timedelta(days=int(age * 365.25 + rng.randint(0, 364)))
             out.append(born.isoformat())
         return out
@@ -385,11 +481,12 @@ class CategoryGenerator(SemanticGenerator):
     semantic_type = "category"
 
     def generate(self, n, rng, context=None):
-        cats = (context or {}).get("categories") or ["Category A", "Category B", "Category C"]
-        dist = (context or {}).get("distribution")
-        if dist:
-            cats = list(dist.keys())
-            return rng.choices(cats, weights=list(dist.values()), k=n)
+        ctx = context or {}
+        cats = ctx.get("categories") or ["Category A", "Category B", "Category C"]
+        dist = ctx.get("distribution")
+        if dist:  # {"HR": 60} -> 60% HR, the rest spread over the other values
+            cats, weights = _dist_split(dist, cats)
+            return rng.choices(cats, weights=weights, k=n)
         return rng.choices(cats, k=n)
 
 
@@ -405,9 +502,8 @@ class IntegerGenerator(SemanticGenerator):
     semantic_type = "integer"
 
     def generate(self, n, rng, context=None):
-        ctx = context or {}
-        lo = int(ctx.get("min") if ctx.get("min") is not None else 0)
-        hi = int(ctx.get("max") if ctx.get("max") is not None else 100)
+        lo, hi = _bounds(context or {}, 0, 100)
+        lo, hi = int(lo), int(hi)
         return [rng.randint(lo, hi) for _ in range(n)]
 
 
@@ -415,9 +511,7 @@ class FloatGenerator(SemanticGenerator):
     semantic_type = "float"
 
     def generate(self, n, rng, context=None):
-        ctx = context or {}
-        lo = float(ctx.get("min") if ctx.get("min") is not None else 0)
-        hi = float(ctx.get("max") if ctx.get("max") is not None else 100)
+        lo, hi = _bounds(context or {}, 0.0, 100.0)
         return [round(rng.uniform(lo, hi), 2) for _ in range(n)]
 
 

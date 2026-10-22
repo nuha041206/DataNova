@@ -13,6 +13,7 @@ Design notes:
 """
 from __future__ import annotations
 
+import csv as _csv
 import io
 from typing import Any, Dict, List, Optional
 
@@ -37,6 +38,90 @@ class DatasetError(ValueError):
     """Raised when an uploaded file cannot be used as a dataset."""
 
 
+def _decode(raw: bytes) -> str:
+    """Decode upload bytes to text, rejecting binary/unreadable content."""
+    # utf-8 first, fall back to latin-1 (common with Excel-exported CSVs)
+    try:
+        text = raw.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        try:
+            text = raw.decode("latin-1")
+        except UnicodeDecodeError as exc:
+            raise DatasetError("File must be UTF-8 or Latin-1 encoded text.") from exc
+
+    # Content check (not just the filename): NUL bytes or a high share of
+    # control characters means this is not a readable text CSV — e.g. an
+    # Excel/ZIP/image file renamed to .csv, or a UTF-16 export.
+    if "\x00" in text:
+        raise DatasetError(
+            "The file does not contain readable text CSV data (it contains binary or "
+            "NUL bytes — it may be an Excel file or a UTF-16 export). Open it and save "
+            "it as a UTF-8 CSV, then upload again."
+        )
+    if text:
+        control = sum(1 for ch in text if ord(ch) < 32 and ch not in "\t\n\r")
+        if control / len(text) > 0.01:
+            raise DatasetError(
+                "The file does not contain readable text CSV data (too many control "
+                "characters). Open it and save it as a UTF-8 CSV, then upload again."
+            )
+    return text
+
+
+def _scan_structure(text: str) -> List[str]:
+    """
+    Validate the raw CSV structure BEFORE pandas parses it.
+
+    pandas silently RENAMES duplicate headers ('a','a' -> 'a','a.1') and can
+    silently mis-align a data row that has more fields than the header, so the
+    header row and every record are checked here first.
+
+    Returns the raw (untrimmed) header cells. Raises DatasetError with an
+    actionable message when the file is blank, has duplicate/empty header
+    problems, or has ragged records.
+    """
+    if not text.strip():
+        raise DatasetError("The uploaded file is blank (no header row and no data).")
+
+    reader = _csv.reader(io.StringIO(text))
+    header: Optional[List[str]] = None
+    try:
+        for row in reader:
+            if row:                      # pandas skips blank lines too
+                header = row
+                break
+    except _csv.Error as exc:
+        raise DatasetError(f"Could not parse the CSV: {exc}. Check the delimiter and header row.") from exc
+    if header is None:
+        raise DatasetError("The uploaded file is blank (no header row and no data).")
+
+    names = [str(c).strip() for c in header]
+    if not any(names):
+        raise DatasetError("The header row has no column names. Add column names to the first row.")
+    dupes = sorted({n for n in names if n and names.count(n) > 1})
+    if dupes:
+        raise DatasetError(
+            f"Duplicate column names found: {dupes}. Give every column a unique header "
+            "(rename or remove the duplicates) so the schema is not corrupted."
+        )
+
+    n_fields = len(header)
+    record = 1
+    try:
+        for row in reader:
+            if not row:
+                continue
+            record += 1
+            if len(row) > n_fields:
+                raise DatasetError(
+                    f"Inconsistent number of columns: record {record} has {len(row)} fields but "
+                    f"the header row has {n_fields}. Fix that row so every record matches the header."
+                )
+    except _csv.Error as exc:
+        raise DatasetError(f"Could not parse the CSV: {exc}. Check the delimiter and quoted values.") from exc
+    return header
+
+
 def load_csv_from_bytes(raw: bytes, filename: str) -> pd.DataFrame:
     """
     Parse uploaded bytes into a DataFrame with light validation.
@@ -52,32 +137,49 @@ def load_csv_from_bytes(raw: bytes, filename: str) -> pd.DataFrame:
     if len(raw) > config.MAX_UPLOAD_BYTES:
         raise DatasetError("File is larger than the 50 MB limit.")
 
-    # utf-8 first, fall back to latin-1 (common with Excel-exported CSVs)
-    try:
-        text = raw.decode("utf-8-sig")
-    except UnicodeDecodeError:
-        try:
-            text = raw.decode("latin-1")
-        except UnicodeDecodeError as exc:
-            raise DatasetError("File must be UTF-8 or Latin-1 encoded text.") from exc
+    text = _decode(raw)
+    raw_header = _scan_structure(text)
 
     try:
         df = pd.read_csv(io.StringIO(text))
     except pd.errors.EmptyDataError as exc:
         raise DatasetError("The CSV file contains no data rows.") from exc
     except pd.errors.ParserError as exc:
-        raise DatasetError("Could not parse the CSV. Check the delimiter and header row.") from exc
+        raise DatasetError(f"Could not parse the CSV. Check the delimiter and header row. ({exc})") from exc
+    except UnicodeDecodeError as exc:
+        raise DatasetError("File must be UTF-8 or Latin-1 encoded text.") from exc
+    except Exception as exc:                       # never surface a raw 500 for a bad file
+        raise DatasetError(f"Could not read the file as CSV: {exc}") from exc
 
-    if df.empty:
+    if df.shape[1] == 0:
         raise DatasetError("The CSV file contains no data rows.")
+    if df.empty:
+        raise DatasetError(
+            "The CSV file has a header row but no data rows. Add at least one row of data "
+            "before uploading (a header-only file cannot be used for synthesis)."
+        )
     if df.shape[1] < 2:
-        raise DatasetError("Dataset needs at least 2 columns to be useful for synthesis.")
+        raise DatasetError(
+            "The file contains only 1 column. DataNova needs at least 2 columns — check that "
+            "the file is comma-separated CSV with a header row."
+        )
 
-    # Normalise column names: strip whitespace, deduplicate
-    df.columns = [str(c).strip() for c in df.columns]
+    # Normalise column names: strip whitespace, give blank header cells a stable
+    # name, then reject anything still duplicated (e.g. "a" and " a").
+    columns = [str(c).strip() for c in df.columns]
+    for i, name in enumerate(columns):
+        raw_cell = str(raw_header[i]).strip() if i < len(raw_header) else ""
+        if not raw_cell:                          # blank / whitespace-only header cell
+            columns[i] = f"Column {i + 1}"
+        elif not name:
+            columns[i] = raw_cell
+    df.columns = columns
     dupes = df.columns[df.columns.duplicated()].tolist()
     if dupes:
-        raise DatasetError(f"Duplicate column names found: {dupes}")
+        raise DatasetError(
+            f"Duplicate column names found: {dupes}. Give every column a unique header "
+            "(rename or remove the duplicates) so the schema is not corrupted."
+        )
 
     return df
 

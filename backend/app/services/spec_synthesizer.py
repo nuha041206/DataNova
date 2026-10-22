@@ -37,16 +37,22 @@ def _rng(seed: Optional[int]) -> random.Random:
     return random.Random(seed if seed is not None else _DEFAULT_SEED)
 
 
-# Ordered so dependencies are generated first
+# Ordered so dependencies are generated first (age before date_of_birth so
+# dates of birth can follow the generated ages)
 _DEPENDENCY_ORDER = [
     "gender", "state", "country", "city", "address", "indian_pincode",
-    "person_name", "email", "date_of_birth", "age", "salary", "currency",
+    "person_name", "email", "age", "date_of_birth", "salary", "currency",
 ]
 
 
 def _context_for(col: Dict[str, Any], series: Dict[str, List[Any]],
-                 columns: List[Dict[str, Any]]) -> Dict[str, Any]:
-    """Build the generator context for a column, wiring dependencies."""
+                  columns: List[Dict[str, Any]], country: Optional[str] = None) -> Dict[str, Any]:
+    """Build the generator context for a column, wiring dependencies.
+
+    Dependencies are found by MEANING (semantic_type), not by column name, so
+    a column called "sex" still coordinates names and "province" still
+    coordinates cities.
+    """
     ctx: Dict[str, Any] = {
         "min": col.get("min"),
         "max": col.get("max"),
@@ -55,27 +61,39 @@ def _context_for(col: Dict[str, Any], series: Dict[str, List[Any]],
     }
     sem = col["semantic_type"]
 
-    if sem == "person_name" and "Gender" in series:
-        ctx["gender_series"] = series["Gender"]
+    def _dep(semantic: str) -> Optional[str]:
+        """Name of an already-generated column with this meaning, if any."""
+        return next((c["name"] for c in columns
+                     if c["semantic_type"] == semantic and c["name"] in series), None)
+
+    gender_col = _dep("gender")
+    if sem == "person_name" and gender_col:
+        ctx["gender_series"] = series[gender_col]
     if sem == "email":
-        name_col = next((c["name"] for c in columns if c["semantic_type"] == "person_name" and c["name"] in series), None)
+        name_col = _dep("person_name")
         if name_col:
             ctx["name_series"] = series[name_col]
-    if sem == "city" and "State" in series:
-        ctx["state_series"] = series["State"]
+    state_col = _dep("state")
+    if sem == "city" and state_col:
+        ctx["state_series"] = series[state_col]
     if sem == "address":
-        for dep, key in (("City", "city_series"), ("State", "state_series")):
-            src = next((c["name"] for c in columns if c["semantic_type"] == dep.lower() and c["name"] in series), None)
-            if src:
-                ctx[key] = series[src]
-    if sem == "indian_pincode":
-        src = next((c["name"] for c in columns if c["semantic_type"] == "state" and c["name"] in series), None)
-        if src:
-            ctx["state_series"] = series[src]
-    if sem == "salary":
-        src = next((c["name"] for c in columns if c["semantic_type"] == "age" and c["name"] in series), None)
-        if src:
-            ctx["age_series"] = series[src]
+        city_col, state_col2 = _dep("city"), _dep("state")
+        if city_col:
+            ctx["city_series"] = series[city_col]
+        if state_col2:
+            ctx["state_series"] = series[state_col2]
+    if sem == "indian_pincode" and state_col:
+        ctx["state_series"] = series[state_col]
+    age_col = _dep("age")
+    if sem == "salary" and age_col:
+        ctx["age_series"] = series[age_col]
+    if sem == "date_of_birth" and age_col:
+        # DOB follows the age column so the two stay consistent
+        ctx["age_series"] = series[age_col]
+    if sem == "country" and not ctx.get("categories") and country:
+        ctx["categories"] = [country]
+    if sem in ("customer_id", "generic_id") and not ctx.get("prefix"):
+        ctx["prefix"] = "".join(ch for ch in str(col["name"])[:4].upper() if ch.isalpha()) or "ID"
     if sem == "gender" and not ctx.get("categories"):
         ctx["categories"] = ["Male", "Female", "Other"]
         ctx["weights"] = [49, 49, 2]
@@ -90,9 +108,30 @@ def _generate_columns(spec: RequirementSpec, n: int, rng: random.Random) -> pd.D
     series: Dict[str, List[Any]] = {}
     for col in order:
         gen = generator_for(col["semantic_type"])
-        ctx = _context_for(col, series, columns)
+        ctx = _context_for(col, series, columns, country=spec.country)
         series[col["name"]] = gen.generate(n, rng, ctx)
     return pd.DataFrame(series)
+
+
+def _validate_spec(spec: RequirementSpec) -> None:
+    """Reject a broken schema with a clear message instead of a pandas error."""
+    columns = list(spec.columns or [])
+    names = [str(c.get("name") or "").strip() for c in columns]
+    if any(not n for n in names):
+        raise ValueError("Every column needs a name. Name it in the schema editor (or add it to the prompt).")
+    dupes = sorted({n for n in names if names.count(n) > 1})
+    if dupes:
+        raise ValueError(
+            f"Duplicate column name(s) in the schema: {', '.join(dupes)}. "
+            "Rename or remove them so each column is generated separately."
+        )
+    for col in columns:
+        lo, hi = col.get("min"), col.get("max")
+        if lo is not None and hi is not None and float(lo) > float(hi):
+            raise ValueError(
+                f"Column '{col['name']}': minimum ({lo}) is greater than maximum ({hi}). "
+                "Swap them in the schema editor."
+            )
 
 
 def _add_unique_ids(df: pd.DataFrame, spec: RequirementSpec, rng: random.Random) -> List[str]:
@@ -160,6 +199,7 @@ def generate_from_spec(spec: RequirementSpec, seed: Optional[int] = None) -> Dic
     n_rows = int(spec.rows) if spec.rows else 2000
     if not spec.columns:
         raise ValueError("No columns in the spec. Add columns in the schema editor before generating.")
+    _validate_spec(spec)
 
     # ---- 1. generate the feature columns --------------------------------
     df = _generate_columns(spec, n_rows, rng)
