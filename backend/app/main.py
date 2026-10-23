@@ -4,9 +4,13 @@ DataNova FastAPI application entry point.
 Run from the backend folder with:
     uvicorn app.main:app --reload --port 8000
 
-CORS is wide open because the Next.js dev server runs on a different port;
-this is a local application, not a public deployment.
+CORS defaults to the local Next.js dev server (localhost:3000). In
+deployment, set the CORS_ORIGINS environment variable to a comma-separated
+list of the real frontend origins (e.g. "https://my-app.vercel.app") so the
+hosted frontend can call this API.
 """
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -18,10 +22,19 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# Allow the Next.js frontend (any local origin during development)
+# Local dev origins, always allowed.
+_DEFAULT_ORIGINS = ["http://localhost:3000", "http://127.0.0.1:3000"]
+
+# Extra origins for deployment, e.g. CORS_ORIGINS="https://my-app.vercel.app"
+_extra_origins = [
+    o.strip()
+    for o in os.environ.get("CORS_ORIGINS", "").split(",")
+    if o.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=_DEFAULT_ORIGINS + _extra_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

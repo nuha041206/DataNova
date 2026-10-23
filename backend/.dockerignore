@@ -1,0 +1,17 @@
+# Keep the Docker build context small and never bake local data into the image.
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.log
+
+# Local data: uploads, generated CSVs, SQLite DB, PDF reports.
+# This must never end up inside the image.
+data/
+
+# Tests and sample data are not needed in the production image.
+scripts/
+
+# Environment files — secrets must not enter the image.
+.env
+.env.*

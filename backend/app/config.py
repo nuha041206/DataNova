@@ -2,19 +2,28 @@
 DataNova backend configuration.
 
 Central place for paths and tunable constants so nothing is hard-coded
-in the route modules. Kept deliberately simple (plain Python constants)
-because this is a single-user local application; no need for env-var
-management or a config library.
+in the route modules. Kept deliberately simple (plain Python constants
+plus one optional environment variable) because this is a single-user
+local application.
+
+Environment variables (all optional — local defaults are unchanged if
+they are not set):
+    DATANOVA_DATA_DIR  Override where uploads / generated CSVs / the SQLite
+                       database / PDF reports are stored. Used in deployment
+                       to point at a mounted volume (e.g. /data on a Hugging
+                       Face Space). Defaults to <backend>/data.
 """
+import os
 from pathlib import Path
 
 # ---------------------------------------------------------------------------
 # Paths
 # ---------------------------------------------------------------------------
 BASE_DIR = Path(__file__).resolve().parent.parent  # datanova/backend
-DATA_DIR = BASE_DIR / "data"          # uploaded + generated datasets live here
-DB_DIR = BASE_DIR / "data" / "db"     # SQLite database file
-REPORT_DIR = BASE_DIR / "data" / "reports"  # generated PDF reports
+# Storage root: default <backend>/data, overridable for deployment volumes.
+DATA_DIR = Path(os.environ.get("DATANOVA_DATA_DIR") or (BASE_DIR / "data"))
+DB_DIR = DATA_DIR / "db"               # SQLite database file
+REPORT_DIR = DATA_DIR / "reports"      # generated PDF reports
 
 DB_PATH = DB_DIR / "datanova.db"
 
