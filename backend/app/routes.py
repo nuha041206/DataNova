@@ -131,11 +131,47 @@ def _slugify(text: str, fallback: str = "dataset") -> str:
     return text[:60] or fallback
 
 
-def _project_file_base(project: Dict[str, Any]) -> str:
-    """Human-readable base name for a project's download files."""
-    created = str(project.get("created_at") or "")
-    day = created[:10].replace("-", "") or pd.Timestamp.now().strftime("%Y%m%d")
-    return f"{_slugify(str(project.get('name') or 'project'))}-{day}"
+# Generic words that say nothing about the dataset's subject. Stripped from
+# user-facing filenames so "Indian Customer Synthetic Dataset" becomes the
+# short, meaningful stem "indian-customer" (-> indian-customer-dataset.csv).
+_NAME_STOP_WORDS = {"synthetic", "dataset", "data", "project", "untitled",
+                    "copy", "messy", "export", "final", "new"}
+
+
+def _file_stem(name: Any) -> str:
+    """
+    Short meaningful filename stem from a project/dataset name.
+
+    Drops filler words, keeps the subject, caps the length. Falls back to
+    "dataset" when the name had no subject words left.
+    """
+    words = [w for w in re.split(r"[^a-z0-9]+", str(name or "").lower())
+             if w and w not in _NAME_STOP_WORDS]
+    slug = "-".join(words)[:48].strip("-")
+    return slug or "dataset"
+
+
+def _unique_path(directory: Path, filename: str,
+                 own_path: Optional[Path] = None) -> Path:
+    """
+    Collision-safe path for a NEW stored artifact.
+
+    If the target exists and is NOT this project's own file, append a short
+    numeric suffix (_2, _3, ...) instead of overwriting another project's
+    file. Regenerating a project's own artifact keeps its existing path.
+    """
+    own = Path(own_path) if own_path is not None else None
+    candidate = directory / filename
+    if own is not None and candidate == own:
+        return candidate
+    if not candidate.exists():
+        return candidate
+    i = 2
+    while True:
+        suffixed = directory / f"{candidate.stem}_{i}{candidate.suffix}"
+        if not suffixed.exists() or suffixed == own:
+            return suffixed
+        i += 1
 
 
 def _store_synth(upload_id: str, synth: pd.DataFrame) -> None:
@@ -270,9 +306,71 @@ def generation_preview(upload_id: str, body: schemas.GenerateRequest):
     }
 
 
+def _is_dob_semantic(info: Dict[str, Any]) -> bool:
+    """
+    A date-of-birth column, whichever way it was detected.
+
+    Mode A stores DOB columns as technical_type="date_of_birth" with
+    semantic_type="datetime" (the datetime branch wins over name hints),
+    while the Mode B parser uses semantic_type="date_of_birth".
+    """
+    return (info.get("semantic_type") == "date_of_birth"
+            or info.get("technical_type") == "date_of_birth")
+
+
+_NAMEWORD_RE = re.compile(r"^[A-Za-z][A-Za-z.,'\- ]*$")
+
+
+def _looks_like_person_name(series: pd.Series) -> bool:
+    """
+    True when most sampled values look like personal names (2+ words).
+
+    Guards the person_name REBUILD against columns misdetected as names:
+    "Job Title" matches a 'title' name hint but holds single-word categories
+    ("Executive"), which must NOT be replaced with person names.
+    """
+    sample = series.dropna().astype(str).head(50)
+    if sample.empty:
+        return False
+    ok = 0
+    for v in sample:
+        v = v.strip()
+        if not _NAMEWORD_RE.match(v):
+            continue
+        tokens = [t for t in re.split(r"[\s,]+", v) if t]
+        if len(tokens) >= 2 and all(len(t) >= 2 for t in tokens):
+            ok += 1
+    return ok >= 0.7 * len(sample)
+
+
+def _indian_places() -> set:
+    """Indian state + city names known to the generator vocabulary."""
+    places = set(semantic_generators._STATE_CITIES)
+    for cities in semantic_generators._STATE_CITIES.values():
+        places.update(cities)
+    return places
+
+
+def _source_address_looks_indian(series: pd.Series) -> bool:
+    """
+    Does the SOURCE's own address column look Indian?
+
+    Used when there are no city/state columns to auto-detect from: source
+    addresses naming an Indian city/state mean Indian-style addresses;
+    otherwise the generic western form is the respectful default (never a
+    rigid assumption about an unrelated dataset).
+    """
+    sample = series.dropna().astype(str).head(60)
+    if sample.empty:
+        return False
+    places = _indian_places()
+    hits = sum(1 for v in sample if any(p in v for p in places))
+    return hits >= max(1, len(sample) // 4)
+
+
 def _postprocess_semantics(df: pd.DataFrame, synthetic: pd.DataFrame,
                            schema: Dict[str, Dict[str, Any]],
-                           rng: "random.Random") -> Tuple[pd.DataFrame, List[str], int]:
+                           rng: "random.Random") -> Tuple[pd.DataFrame, List[str], List[str]]:
     """
     Re-generate semantic-typed columns on top of the SDV output.
 
@@ -283,27 +381,73 @@ def _postprocess_semantics(df: pd.DataFrame, synthetic: pd.DataFrame,
     a valid, plausible value of that semantic type — then keep SDV's values
     for genuinely numeric/categorical columns untouched.
 
-    Returns (frame, notes, n_regenerated_columns).
+    Returns (frame, notes, rebuilt_column_names).
     """
     notes: List[str] = []
-    rebuilt = 0
+    rebuilt_cols: List[str] = []
     out = synthetic.copy()
+
+    # --- targeted repairs FIRST, so the semantic rebuilds below (addresses,
+    # DOBs) see coherent inputs: repaired ages drive DOB generation, and the
+    # source-aligned city-state mapping drives address generation. ---
+    out = _repair_age_columns(df, out, schema, rng, notes)
+    out = _repair_city_state(df, out, schema, notes)
     # Only format-critical semantic types are rebuilt: SDV already preserves
     # numeric distributions and category pools well, but it cannot guarantee
-    # valid NAME/PHONE/PIN/EMAIL formats or Indian place coherence.
-    # Only strict-FORMAT semantic types are rebuilt with dedicated generators.
-    # Category-pool columns (gender, city, state, country, names, products...)
-    # are left as SDV sampled them: SDV learned the REAL dataset's own value
+    # valid NAME/PHONE/PIN/EMAIL/ADDRESS formats or Indian place coherence.
+    # Category-pool columns (gender, city, state, country, products...) are
+    # left as SDV sampled them: SDV learned the REAL dataset's own value
     # pools and their joint distribution, which is more faithful than any
     # generic generator vocabulary (and preserves city-state coherence).
+    # person_name is rebuilt ONLY when the source's own name pool is too small
+    # for the requested row count (otherwise the source distribution wins).
     _REBUILDABLE = {"indian_phone", "email", "indian_pincode", "customer_id",
-                    "generic_id", "date_of_birth"}
+                    "generic_id", "date_of_birth", "address"}
+
+    def _sem_of(target: str, name_like: bool = False) -> Optional[str]:
+        for c, i2 in schema.items():
+            if i2.get("semantic_type") == target and c in out.columns:
+                if not name_like or _looks_like_person_name(out[c]):
+                    return c
+        return None
+
+    # Country signals for style decisions: Indian-specific semantics
+    # (phone/pincode) OR place columns whose values are Indian cities/states.
+    # Names AND addresses use this, so they can never disagree about the
+    # country of the same dataset.
+    indian_sig = any(schema[c].get("semantic_type") in ("indian_phone", "indian_pincode")
+                     for c in schema)
+    if not indian_sig:
+        places = _indian_places()
+        for c, i2 in schema.items():
+            if i2.get("semantic_type") in ("city", "state") and c in df.columns:
+                if any(v in places for v in df[c].dropna().astype(str).head(50)):
+                    indian_sig = True
+                    break
+
     for col, info in schema.items():
         if col not in out.columns:
             continue
         sem = info.get("semantic_type")
+        if sem != "date_of_birth" and _is_dob_semantic(info):
+            sem = "date_of_birth"   # Mode A stores DOB as tech="date_of_birth"
         conf = float(info.get("semantic_confidence") or 0)
-        if sem not in _REBUILDABLE or conf < 0.6:
+        if conf < 0.6:
+            continue
+        if sem == "person_name":
+            # Rebuild ONLY when the source's own name pool is too small for the
+            # requested row count ("Sarah Johnson x46") AND the values really
+            # look like personal names (a misdetected "Job Title" holds
+            # single-word categories and must never become person names).
+            src_pool = int(df[col].nunique(dropna=True)) if col in df.columns else 0
+            if src_pool >= 0.25 * max(len(out), 1):
+                continue                      # source pool is rich enough: keep SDV's names
+            if not _looks_like_person_name(df[col] if col in df.columns else out[col]):
+                continue                      # not actually personal names
+        elif sem == "date_of_birth":
+            if not _sem_of("age"):
+                continue          # no ages to follow: keep SDV's own DOB distribution
+        elif sem not in _REBUILDABLE:
             continue
         # Numeric identifier-like columns (phones/pincodes/ids stored as
         # integers) get semantic regeneration too: copula models fit them
@@ -313,22 +457,212 @@ def _postprocess_semantics(df: pd.DataFrame, synthetic: pd.DataFrame,
         gen = semantic_generators.generator_for(sem)
         ctx: Dict[str, Any] = {}
         if sem == "email":
-            name_col = next((c for c, i2 in schema.items()
-                             if i2.get("semantic_type") == "person_name" and c in out.columns), None)
+            name_col = _sem_of("person_name", name_like=True)
             if name_col:
                 ctx["name_series"] = out[name_col].astype(str).tolist()
         if sem == "indian_pincode":
-            state_col = next((c for c, i2 in schema.items()
-                              if i2.get("semantic_type") == "state" and c in out.columns), None)
+            state_col = _sem_of("state")
             if state_col:
                 ctx["state_series"] = out[state_col].astype(str).tolist()
+        if sem == "address":
+            city_col, state_col = _sem_of("city"), _sem_of("state")
+            pin_col = _sem_of("indian_pincode")
+            if city_col:
+                ctx["city_series"] = out[city_col].astype(str).tolist()
+            if state_col:
+                ctx["state_series"] = out[state_col].astype(str).tolist()
+            if pin_col:
+                pins = out[pin_col].astype(str).str.replace(r"\.0$", "", regex=True)
+                ctx["pincode_series"] = pins.tolist()
+            if not city_col and not state_col:
+                # No place columns to auto-detect from: prefer the SOURCE's
+                # own address style, else the schema's country signals —
+                # the same rule the names use (see indian_sig above).
+                src_indian = _source_address_looks_indian(df[col]) if col in df.columns else False
+                ctx["style"] = "india" if (src_indian or indian_sig) else "western"
+        if sem == "person_name":
+            gender_col = _sem_of("gender")
+            if gender_col:
+                ctx["gender_series"] = out[gender_col].tolist()
+            # Indian context when the schema says India, otherwise do NOT
+            # force Indian names on a non-Indian dataset.
+            ctx["style"] = "india" if indian_sig else "western"
+        if sem == "date_of_birth":
+            age_col = _sem_of("age")
+            ages = pd.to_numeric(out[age_col], errors="coerce")
+            if ages.notna().any():
+                # fill gaps with the median so int(float(v)) never sees NaN
+                filled = ages.fillna(ages.median()).tolist()
+                ctx["age_series"] = filled   # DOB follows Age per row
+        if sem in ("customer_id", "generic_id") and col in df.columns:
+            # Keep the source's identifier FORMAT (its letter prefix), e.g.
+            # "EMP00001" -> prefix EMP, not a generic "ID".
+            src_ids = df[col].dropna().astype(str).head(200)
+            prefixes = [m.group(0) for m in
+                        (re.match(r"^[A-Za-z]+", v.strip()) for v in src_ids) if m]
+            if prefixes:
+                top = max(set(prefixes), key=prefixes.count)
+                if prefixes.count(top) >= 0.6 * len(prefixes):
+                    ctx["prefix"] = top.upper()
         out[col] = gen.generate(len(out), rng, ctx)
         if numeric_source and sem != "date_of_birth":
             digits = out[col].astype(str).str.replace(r"\D", "", regex=True)
             out[col] = pd.to_numeric(digits, errors="coerce")
+        if sem == "date_of_birth" and pd.api.types.is_datetime64_any_dtype(df[col]):
+            out[col] = pd.to_datetime(out[col], errors="coerce")
         notes.append(f"Column '{col}' regenerated with the {sem} semantic generator to guarantee valid formats.")
-        rebuilt += 1
-    return out, notes, rebuilt
+        rebuilt_cols.append(col)
+
+    # --- repair that needs the FINAL dob column (post-rebuild) ---
+    out = _repair_hire_dates(out, schema, rng, notes)
+    return out, notes, rebuilt_cols
+
+
+def _repair_city_state(df: pd.DataFrame, out: pd.DataFrame,
+                       schema: Dict[str, Dict[str, Any]], notes: List[str]) -> pd.DataFrame:
+    """
+    Consistency rule: a city must keep the state it had in the source data.
+
+    The copula learns city/state associations only weakly, so some rows pair
+    "Mumbai" with "Delhi". For every city whose source mapping is UNAMBIGUOUS
+    (one state only), align mismatched synthetic rows to the source's own
+    mapping. Cities with multiple states in the source are left untouched —
+    no rigid assumptions beyond what the upload itself says.
+    """
+    city_col = next((c for c, i2 in schema.items()
+                     if i2.get("semantic_type") == "city" and c in out.columns), None)
+    state_col = next((c for c, i2 in schema.items()
+                      if i2.get("semantic_type") == "state" and c in out.columns), None)
+    if not city_col or not state_col:
+        return out
+    if city_col not in df.columns or state_col not in df.columns:
+        return out
+    try:
+        src_pairs = df[[city_col, state_col]].dropna().astype(str)
+        if src_pairs.empty:
+            return out
+        states_per_city = src_pairs.groupby(city_col)[state_col].nunique()
+        unambiguous = set(states_per_city[states_per_city == 1].index)
+        mapping = src_pairs.drop_duplicates().set_index(city_col)[state_col].to_dict()
+        cvals, svals = out[city_col].astype(str), out[state_col].astype(str)
+        bad = cvals.isin(unambiguous) & (svals != cvals.map(mapping))
+        n_bad = int(bad.sum())
+        if n_bad == 0:
+            return out
+        out.loc[bad, state_col] = cvals[bad].map(mapping)
+        notes.append(
+            f"Column '{state_col}': {n_bad} row(s) paired a city with the wrong state "
+            "and were aligned to the source dataset's own city-state mapping.")
+    except Exception:
+        return out
+    return out
+
+
+def _repair_age_columns(df: pd.DataFrame, out: pd.DataFrame,
+                        schema: Dict[str, Dict[str, Any]], rng: "random.Random",
+                        notes: List[str]) -> pd.DataFrame:
+    """
+    Targeted correction for age columns: SDV auto-classifies a UNIQUE numeric
+    column as an identifier and then generates random large integers
+    ("10414361" in an Age column), or copies a sequential counter. When the
+    generated age column is out of the source's own range (its statistics) or
+    looks like a counter the source did not have, regenerate ONLY the bad
+    values within the source's observed min/max — a context-appropriate range
+    taken from the data itself, not a rigid fixed range.
+    """
+    for col, info in schema.items():
+        if col not in out.columns or col not in df.columns:
+            continue
+        if info.get("semantic_type") != "age" or float(info.get("semantic_confidence") or 0) < 0.6:
+            continue
+        src = pd.to_numeric(df[col], errors="coerce").dropna()
+        if src.empty:
+            continue
+        lo, hi = float(src.min()), float(src.max())
+        span = (hi - lo) or 1.0
+        tol = max(span * 0.15, 2.0)
+        cur = pd.to_numeric(out[col], errors="coerce")
+
+        bad_mask = cur.isna() | (cur < lo - tol) | (cur > hi + tol)
+        # Counter/sequence detection: a run of +1 steps that the SOURCE did
+        # not have is an identifier pattern, not an age distribution.
+        diffs = cur.diff()
+        seq_fraction = float((diffs == 1).mean()) if len(cur) > 2 else 0.0
+        src_diffs = src.sort_values().diff()
+        src_seq = float((src_diffs == 1).mean()) if len(src) > 2 else 0.0
+        if seq_fraction > 0.6 and src_seq <= 0.6:
+            bad_mask = pd.Series(True, index=out.index)
+
+        n_bad = int(bad_mask.sum())
+        if n_bad == 0:
+            continue
+        fresh = semantic_generators.generator_for("age").generate(
+            n_bad, rng, {"min": lo, "max": hi})
+        if pd.api.types.is_integer_dtype(df[col]):
+            fresh = [int(round(v)) for v in fresh]
+        out.loc[bad_mask, col] = fresh
+        # restore the source dtype (string ages stay strings)
+        if pd.api.types.is_numeric_dtype(df[col]):
+            out[col] = pd.to_numeric(out[col], errors="coerce")
+            if pd.api.types.is_integer_dtype(df[col]):
+                out[col] = out[col].round().astype("Int64")
+        else:
+            out[col] = out[col].astype(df[col].dtype)
+        notes.append(
+            f"Column '{col}': {n_bad} value(s) were out of the source age range "
+            f"[{lo:.0f}, {hi:.0f}] or followed a sequential ID-like pattern and "
+            "were regenerated within the source's own age statistics.")
+    return out
+
+
+def _repair_hire_dates(out: pd.DataFrame, schema: Dict[str, Dict[str, Any]],
+                       rng: "random.Random", notes: List[str]) -> pd.DataFrame:
+    """
+    Consistency rule: a hire/join/start date must not precede the employee's
+    date of birth. Applied ONLY when both columns exist and violations are
+    actually found; offending rows are shifted into [DOB+18y, DOB+45y].
+    Unrelated datasets are untouched.
+    """
+    dob_col = next((c for c, i2 in schema.items()
+                    if c in out.columns and _is_dob_semantic(i2)), None)
+    if not dob_col:
+        return out
+    hire_col = next(
+        (c for c, i2 in schema.items()
+         if c in out.columns and c != dob_col
+         and str(i2.get("technical_type") or "") in ("date", "datetime")
+         and any(k in c.lower() for k in ("hire", "join", "start_date", "start date", "onboard"))),
+        None)
+    if not hire_col:
+        return out
+    try:
+        dob = pd.to_datetime(out[dob_col], errors="coerce")
+        hire = pd.to_datetime(out[hire_col], errors="coerce")
+    except (ValueError, TypeError):
+        return out
+    viol = hire.notna() & dob.notna() & (hire < dob)
+    n_viol = int(viol.sum())
+    if n_viol == 0:
+        return out
+    today = pd.Timestamp.today()
+    fixed = []
+    for d in dob[viol]:
+        earliest = d + pd.DateOffset(years=18)
+        latest = min(d + pd.DateOffset(years=45), today)
+        if earliest > latest:
+            earliest = latest - pd.DateOffset(days=30)
+        span_days = max((latest - earliest).days, 1)
+        fixed.append(earliest + pd.Timedelta(days=int(rng.uniform(0, span_days))))
+    if pd.api.types.is_datetime64_any_dtype(out[hire_col]):
+        out.loc[viol, hire_col] = pd.to_datetime(fixed)
+    else:
+        fmt = "%Y-%m-%d" if "T" not in str(out[hire_col].dropna().iloc[0] or "")[:11] else None
+        out.loc[viol, hire_col] = [
+            (t.isoformat() if fmt is None else t.strftime(fmt)) for t in fixed]
+    notes.append(
+        f"Column '{hire_col}': {n_viol} date(s) preceded the date of birth and were "
+        "shifted to a plausible working-age range (consistency rule).")
+    return out
 
 
 @router.get("/upload/{upload_id}/generation-status")
@@ -386,7 +720,7 @@ def generate(upload_id: str, body: schemas.GenerateRequest):
         sampled_rows = int(len(synth))
 
         # --- semantic post-processing (format validity for names/phones/...) ---
-        synth, sem_notes, n_rebuilt = _postprocess_semantics(df, synth, schema, rng)
+        synth, sem_notes, rebuilt_cols = _postprocess_semantics(df, synth, schema, rng)
 
         # --- uniqueness enforcement (dedupe + top-up sampling from the SAME
         #     fitted model — no refitting, so this stays fast) ---
@@ -404,7 +738,7 @@ def generate(upload_id: str, body: schemas.GenerateRequest):
         )
 
         # --- source-fidelity gate: did generation actually follow the upload? ---
-        fidelity = sdv_generator.structure_violations(synth, df)
+        fidelity = sdv_generator.structure_violations(synth, df, skip_columns=rebuilt_cols)
         retried = False
         if (fidelity["invented_category_values"] > 0 or fidelity["out_of_range_numeric"] > 0) \
                 and not body.synthesizer and fitted.approach != "GaussianCopula":
@@ -419,7 +753,7 @@ def generate(upload_id: str, body: schemas.GenerateRequest):
             t_sample0 = time.time()
             synth = fitted.sample(body.n_rows)
             sample_seconds = round(time.time() - t_sample0, 1)
-            synth, sem_notes, n_rebuilt = _postprocess_semantics(df, synth, schema, rng)
+            synth, sem_notes, rebuilt_cols = _postprocess_semantics(df, synth, schema, rng)
 
             def make_more(k: int) -> pd.DataFrame:
                 extra = fitted.sample(k)
@@ -430,7 +764,7 @@ def generate(upload_id: str, body: schemas.GenerateRequest):
                 synth, original=df, n_requested=body.n_rows,
                 make_more=make_more, unique_columns=[],
             )
-            fidelity = sdv_generator.structure_violations(synth, df)
+            fidelity = sdv_generator.structure_violations(synth, df, skip_columns=rebuilt_cols)
             retried = True
     except RuntimeError as exc:
         _set_stage("error", detail=str(exc))
@@ -468,11 +802,11 @@ def generate(upload_id: str, body: schemas.GenerateRequest):
 
     _store_synth(upload_id, synth)
 
-    validation_warnings = list(sdv_generator.validate_synthetics(synth, df))
+    validation_warnings = list(sdv_generator.validate_synthetics(synth, df, skip_columns=rebuilt_cols))
     validation_warnings.extend([n for n in uni_report.get("notes", [])])
-    if n_rebuilt:
+    if rebuilt_cols:
         validation_warnings.append(
-            f"{n_rebuilt} semantic column(s) were re-generated with dedicated format-aware generators "
+            f"{len(rebuilt_cols)} semantic column(s) were re-generated with dedicated format-aware generators "
             "(SDV learned their distribution; the generator guarantees valid formats)."
         )
     if retried:
@@ -572,9 +906,7 @@ def session_messy_download(upload_id: str):
     meta = _UPLOAD_META.get(key, {})
     source_name = str(meta.get("filename") or "dataset").replace(" messy copy", "")
     stem = re.sub(r"\.csv$", "", source_name, flags=re.IGNORECASE)
-    base = _slugify(stem, "dataset")
-    stamp = pd.Timestamp.now().strftime("%Y%m%d-%H%M")
-    return _df_to_csv_response(_SYNTHS[key], f"{base}-synthetic-messy-{stamp}.csv")
+    return _df_to_csv_response(_SYNTHS[key], f"{_file_stem(stem)}-messy.csv")
 
 
 # ---------------------------------------------------------------------------
@@ -802,18 +1134,6 @@ def projects_save(body: schemas.SaveProjectRequest):
         synth_df = _SYNTHS[body.upload_id]
 
     config.ensure_dirs()
-    slug_base = f"{_slugify(body.name, 'project')}-{pd.Timestamp.now().strftime('%Y%m%d')}"
-
-    # Persist synthetic CSV for reloads, named after the project so downloads
-    # are human-readable.
-    synth_filename = None
-    synth_preview_rows = None
-    if synth_df is not None:
-        synth_dir = config.DATA_DIR / "synthetic"
-        synth_dir.mkdir(exist_ok=True)
-        synth_filename = f"{slug_base}-synthetic.csv"
-        synth_df.to_csv(synth_dir / synth_filename, index=False)
-        synth_preview_rows = _jsonify_frame(synth_df, 5)
 
     # Every project needs a human-readable name (§34): derive one when the
     # user leaves it blank instead of storing an empty string.
@@ -825,6 +1145,18 @@ def projects_save(body: schemas.SaveProjectRequest):
             stem = re.sub(r"\.csv$", "", body.dataset_filename or "", flags=re.IGNORECASE).strip()
             project_name = f"{_slugify(stem, 'dataset').replace('-', ' ').title()} Synthetic Dataset" if stem \
                 else "Untitled Synthetic Dataset"
+
+    # Persist synthetic CSV for reloads, named after the project's subject so
+    # downloads are short and human-readable ("indian-customer-dataset.csv").
+    synth_filename = None
+    synth_preview_rows = None
+    if synth_df is not None:
+        synth_dir = config.DATA_DIR / "synthetic"
+        synth_dir.mkdir(exist_ok=True)
+        synth_path = _unique_path(synth_dir, f"{_file_stem(project_name)}-dataset.csv")
+        synth_filename = synth_path.name
+        synth_df.to_csv(synth_path, index=False)
+        synth_preview_rows = _jsonify_frame(synth_df, 5)
 
     fields = {
         "name": project_name,
@@ -863,8 +1195,13 @@ def generate_report(project_id: int, body: schemas.ReportRequest | None = None):
         raise HTTPException(status_code=404, detail="Project not found.")
 
     config.ensure_dirs()
-    filename = f"{_project_file_base(proj)}-report.pdf"
-    out_path = config.REPORT_DIR / filename
+    # Regenerating a report overwrites this project's own file; a DIFFERENT
+    # project with the same subject gets a numeric suffix instead.
+    own_path = Path(proj["report_path"]) if proj.get("report_path") else None
+    out_path = _unique_path(config.REPORT_DIR,
+                            f"{_file_stem(proj.get('name'))}-report.pdf",
+                            own_path=own_path)
+    filename = out_path.name
     try:
         report_generator.generate_report(proj, out_path)
     except Exception as exc:
@@ -1024,9 +1361,13 @@ def messy_generate(project_id: int, body: schemas.MessyConfigRequest):
     summary = result["summary"]
 
     config.ensure_dirs()
-    base = _project_file_base(proj)
-    messy_name = f"{base}-messy.csv"
-    messy_path = config.DATA_DIR / "synthetic" / messy_name
+    # Regenerating the messy copy overwrites this project's own copy; other
+    # projects with the same subject get a numeric suffix.
+    own_path = (config.DATA_DIR / "synthetic" / proj["messy_file"]) if proj.get("messy_file") else None
+    messy_path = _unique_path(config.DATA_DIR / "synthetic",
+                              f"{_file_stem(proj.get('name'))}-messy.csv",
+                              own_path=own_path)
+    messy_name = messy_path.name
     messy_df.to_csv(messy_path, index=False)
 
     summary["file"] = messy_name
@@ -1050,7 +1391,7 @@ def messy_download(project_id: int):
     path = config.DATA_DIR / "synthetic" / proj["messy_file"]
     if not path.exists():
         raise HTTPException(status_code=404, detail="Messy dataset file missing on disk.")
-    return FileResponse(path, media_type="text/csv", filename=f"{_project_file_base(proj)}-messy.csv")
+    return FileResponse(path, media_type="text/csv", filename=f"{_file_stem(proj.get('name'))}-messy.csv")
 
 
 @router.get("/projects/{project_id}/synthetic/download")
@@ -1066,7 +1407,7 @@ def download_synthetic_csv(project_id: int):
     path = config.DATA_DIR / "synthetic" / synth_file
     if not path.exists():
         raise HTTPException(status_code=404, detail="Synthetic dataset file missing on disk.")
-    return FileResponse(path, media_type="text/csv", filename=f"{_project_file_base(proj)}-synthetic.csv")
+    return FileResponse(path, media_type="text/csv", filename=f"{_file_stem(proj.get('name'))}-dataset.csv")
 
 
 # ---------------------------------------------------------------------------
@@ -1077,10 +1418,5 @@ def download_session_csv(upload_id: str):
     synth = _get_synth(upload_id)
     meta = _UPLOAD_META.get(upload_id, {})
     source_name = str(meta.get("filename") or "dataset")
-    if upload_id.startswith("req_"):
-        base = _slugify(source_name, "synthetic-dataset")
-    else:
-        stem = re.sub(r"\.csv$", "", source_name, flags=re.IGNORECASE)
-        base = f"{_slugify(stem, 'dataset')}-synthetic"
-    stamp = pd.Timestamp.now().strftime("%Y%m%d-%H%M")
-    return _df_to_csv_response(synth, f"{base}-{stamp}.csv")
+    stem = re.sub(r"\.csv$", "", source_name, flags=re.IGNORECASE)
+    return _df_to_csv_response(synth, f"{_file_stem(stem)}-dataset.csv")

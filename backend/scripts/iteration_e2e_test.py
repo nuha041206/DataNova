@@ -170,7 +170,9 @@ check("files endpoint: messy exists", files.get("messy_csv", {}).get("exists") i
 rep = requests.post(f"{B}/projects/{pid}/report", json={})
 check("report generated", rep.status_code == 200, rep.text[:120])
 pdf = requests.get(f"{B}/projects/{pid}/report/download")
-check("PDF download 200 + readable name", pdf.status_code == 200 and "indian-customer-synthetic-dataset" in pdf.headers.get("content-disposition", ""), pdf.headers.get("content-disposition", ""))
+# short subject-based name: "indian-customer-report.pdf" (a "_2" suffix only
+# appears when a leftover file from a previous run already exists)
+check("PDF download 200 + short readable name", pdf.status_code == 200 and "indian-customer-report" in pdf.headers.get("content-disposition", ""), pdf.headers.get("content-disposition", ""))
 csv2 = requests.get(f"{B}/projects/{pid}/synthetic/download")
 check("CSV re-download after 'navigation' 200", csv2.status_code == 200 and csv2.headers.get("content-disposition", "").endswith(".csv\""))
 ml_in_project = requests.get(f"{B}/projects/{pid}").json().get("ml_utility")

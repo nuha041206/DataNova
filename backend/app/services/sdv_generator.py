@@ -88,6 +88,50 @@ def build_metadata(df: pd.DataFrame, exclude_columns: Optional[List[str]] = None
         # Metadata API differs slightly across SDV versions; non-fatal.
         pass
 
+    # Guard against ID over-reach. SDV (and the loop above) classifies any
+    # unique column as an "id", which corrupts human-readable columns: a
+    # unique integer Age becomes random 7-digit numbers and a unique Address
+    # becomes "sdv-id-xxxxxx" tokens. Restore the proper sdtype for every
+    # id-marked column that our semantic detector does NOT consider a real
+    # identifier (customer_id / generic_id / indian_phone / indian_pincode).
+    try:
+        from .semantic_types import detect_semantic_type
+        _ID_SEMANTICS = {"customer_id", "generic_id", "indian_phone", "indian_pincode"}
+        table = metadata.tables["table"]
+        table_cols = table.columns
+        for col in list(table_cols):
+            try:
+                sdtype = table_cols[col].get("sdtype")
+            except AttributeError:
+                sdtype = table_cols[col]["sdtype"]
+            if sdtype != "id":
+                continue
+            semantic = str((detect_semantic_type(work[col]) or {}).get("semantic_type") or "")
+            if semantic in _ID_SEMANTICS:
+                continue                      # genuine identifier: keep SDV id handling
+            # This column is NOT an identifier (age, address, name, ...):
+            # restore its real sdtype. SDV may also have made it the table's
+            # primary key, which would now be invalid — clear that too.
+            try:
+                if getattr(table, "primary_key", None) == col:
+                    metadata.remove_primary_key(table_name="table")
+            except (AttributeError, ValueError, TypeError):
+                pass
+            series = work[col]
+            if pd.api.types.is_numeric_dtype(series):
+                metadata.update_column(table_name="table", column_name=col, sdtype="numerical")
+            elif pd.api.types.is_datetime64_any_dtype(series):
+                metadata.update_column(table_name="table", column_name=col, sdtype="datetime")
+            else:
+                nunique = int(series.nunique(dropna=True))
+                if nunique <= 200 and nunique <= 0.5 * max(len(series), 1):
+                    metadata.update_column(table_name="table", column_name=col, sdtype="categorical")
+                else:
+                    metadata.update_column(table_name="table", column_name=col, sdtype="text")
+    except Exception:
+        # Metadata API differs across SDV versions; detection fix is best-effort.
+        pass
+
     return metadata
 
 
@@ -211,13 +255,19 @@ class FittedSynthesizer:
         return synthetic
 
 
-def structure_violations(synthetic: pd.DataFrame, source: pd.DataFrame) -> Dict[str, Any]:
+def structure_violations(synthetic: pd.DataFrame, source: pd.DataFrame,
+                         skip_columns: Optional[List[str]] = None) -> Dict[str, Any]:
     """Compare a synthetic frame against the SOURCE dataset's own structure.
 
     Catches the failure mode where generation 'completed' but the data does
     not follow the upload: invented categories, out-of-range numerics, or a
     frame that is mostly duplicates. Returns counts the generate endpoint can
     use to decide on a fallback retry — and the UI can show honestly.
+
+    `skip_columns`: columns deliberately REBUILT by the semantic generators
+    (names, phones, pincodes, addresses, ...). Their new values are valid
+    semantic values by construction, so flagging them as "invented categories"
+    would be a false warning (and could trigger a pointless synthesizer retry).
     """
     violations: Dict[str, Any] = {
         "invented_category_values": 0,
@@ -229,8 +279,9 @@ def structure_violations(synthetic: pd.DataFrame, source: pd.DataFrame) -> Dict[
         violations["details"].append("no data generated")
         return violations
 
+    skip = set(skip_columns or [])
     for col in source.columns:
-        if col not in synthetic.columns:
+        if col not in synthetic.columns or col in skip:
             continue
         s_src, s_syn = source[col], synthetic[col]
         if pd.api.types.is_numeric_dtype(s_src):
@@ -290,9 +341,14 @@ def fit_synthesizer(df: pd.DataFrame, exclude_columns: Optional[List[str]] = Non
     return fitted
 
 
-def validate_synthetics(synthetic: pd.DataFrame, original: pd.DataFrame) -> List[str]:
+def validate_synthetics(synthetic: pd.DataFrame, original: pd.DataFrame,
+                        skip_columns: Optional[List[str]] = None) -> List[str]:
     """
     Sanity checks on generated data. Never silently accepts broken output.
+
+    `skip_columns`: columns deliberately REBUILT by the semantic generators —
+    their fresh values are valid by construction, so "categories not present
+    in the real data" would be a misleading warning for them.
 
     Returns a list of human-readable problems (empty list = all good).
     """
@@ -305,7 +361,8 @@ def validate_synthetics(synthetic: pd.DataFrame, original: pd.DataFrame) -> List
     if missing_cols:
         problems.append(f"Synthetic data is missing column(s): {', '.join(missing_cols)}.")
 
-    common = [c for c in original.columns if c in synthetic.columns]
+    skip = set(skip_columns or [])
+    common = [c for c in original.columns if c in synthetic.columns and c not in skip]
     for col in common:
         real_unique = set(original[col].dropna().unique())
         synth_unique = set(synthetic[col].dropna().unique())

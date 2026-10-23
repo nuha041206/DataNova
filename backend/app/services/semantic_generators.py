@@ -40,8 +40,104 @@ _LAST_NAMES = [
     "Ghosh", "Pandey", "Mishra", "Yadav", "Chauhan", "Rathod", "Naik",
 ]
 
-_MALE_FIRST = [n for n in _FIRST_NAMES[:20] + ["Karan", "Nikhil", "Sameer", "Arnav", "Dev"]]
-_FEMALE_FIRST = [n for n in _FIRST_NAMES[20:40] + ["Ira", "Tara", "Zoya", "Mira", "Anaya"]]
+# Larger controlled pools so a generated dataset does not repeat the same few
+# names endlessly (the small lists above alone gave ~1,500 name combinations,
+# which is far too few for thousand-row datasets). No external service is used.
+_MALE_FIRST_EXTRA = [
+    "Abhishek", "Akash", "Alok", "Anand", "Aniket", "Anirudh", "Ankit", "Anup",
+    "Arpit", "Arvind", "Ashish", "Ashok", "Bharat", "Chetan", "Gaurav", "Girish",
+    "Harsh", "Hemant", "Jatin", "Kabir", "Kailash", "Keshav", "Kunal", "Lakshman",
+    "Mahesh", "Mukesh", "Naveen", "Nikhil", "Nirav", "Prakash", "Pramod", "Pranav",
+    "Praveen", "Rajesh", "Rajiv", "Rakesh", "Ram", "Ravi", "Sachin", "Sandeep",
+    "Sanjay", "Saurabh", "Shyam", "Siddharth", "Tarun", "Umesh", "Varun", "Vijay",
+    "Vinay", "Vishal", "Yash", "Akshay", "Brijesh", "Chandan", "Dhruv", "Ganesh",
+    "Hari", "Nitin", "Piyush", "Rohan", "Sagar", "Shashank", "Suraj", "Vaibhav",
+]
+_FEMALE_FIRST_EXTRA = [
+    "Aishwarya", "Alka", "Ambika", "Anamika", "Anita", "Archana", "Arti", "Babita",
+    "Bhavna", "Chitra", "Deepa", "Deepika", "Gayatri", "Heena", "Jyoti", "Kalpana",
+    "Kamla", "Karuna", "Lata", "Laxmi", "Madhuri", "Mamta", "Manisha", "Mitali",
+    "Namrata", "Nandini", "Neelam", "Nidhi", "Nisha", "Pallavi", "Parvati", "Poonam",
+    "Prachi", "Priyanka", "Radha", "Rani", "Reema", "Rina", "Ritu", "Sapna",
+    "Sarita", "Shalini", "Shanti", "Sheela", "Shobha", "Sita", "Smita", "Sonali",
+    "Swarupa", "Trisha", "Vaishali", "Vidya", "Yamini", "Aarti", "Kavya", "Rasika",
+    "Sonal", "Urmila", "Vrushali", "Zoya",
+]
+_LAST_NAMES_EXTRA = [
+    "Agarwal", "Bajaj", "Bhatt", "Choudhary", "Dutta", "Sen", "Roy", "Chopra",
+    "Arora", "Bhatia", "Chawla", "Grover", "Kohli", "Sethi", "Deshmukh", "Jadhav",
+    "Patil", "Shinde", "Gaikwad", "Hegde", "Jain", "Kale", "Kulkarni", "Mahajan",
+    "Nanda", "Panchal", "Parikh", "Rana", "Saxena", "Shetty", "Shukla", "Sinha",
+    "Solanki", "Srivastava", "Thakur", "Tiwari", "Trivedi", "Varma", "Deshpande",
+    "Gokhale", "Iyengar", "Krishnan", "Mudaliar", "Reddy", "Shetty", "Varrier",
+]
+
+# Western pools for non-Indian contexts (a US/UK dataset must not get Indian
+# names). Used when the request's country says so.
+_WEST_MALE_FIRST = [
+    "James", "John", "Robert", "Michael", "William", "David", "Richard", "Joseph",
+    "Thomas", "Charles", "Christopher", "Daniel", "Matthew", "Anthony", "Mark",
+    "Donald", "Steven", "Paul", "Andrew", "Joshua", "Kenneth", "Kevin", "Brian",
+    "George", "Timothy", "Ronald", "Edward", "Jason", "Jeffrey", "Ryan", "Jacob",
+    "Gary", "Nicholas", "Eric", "Jonathan", "Stephen", "Larry", "Justin", "Scott",
+    "Brandon", "Benjamin", "Samuel", "Gregory", "Alexander", "Patrick", "Frank",
+    "Raymond", "Jack", "Dennis", "Jerry", "Tyler", "Aaron", "Adam", "Nathan",
+    "Henry", "Zachary", "Douglas", "Peter", "Kyle", "Noah", "Ethan", "Jeremy",
+    "Walter", "Christian", "Roger", "Austin", "Sean", "Dylan", "Marcus", "Leo",
+]
+_WEST_FEMALE_FIRST = [
+    "Mary", "Patricia", "Jennifer", "Linda", "Elizabeth", "Barbara", "Susan",
+    "Jessica", "Sarah", "Karen", "Nancy", "Lisa", "Betty", "Margaret", "Sandra",
+    "Ashley", "Kimberly", "Emily", "Donna", "Michelle", "Carol", "Amanda",
+    "Melissa", "Deborah", "Stephanie", "Dorothy", "Rebecca", "Sharon", "Laura",
+    "Cynthia", "Amy", "Kathleen", "Angela", "Shirley", "Brenda", "Emma", "Anna",
+    "Pamela", "Nicole", "Samantha", "Katherine", "Christine", "Helen", "Debra",
+    "Rachel", "Carolyn", "Janet", "Maria", "Catherine", "Heather", "Diane",
+    "Olivia", "Julie", "Joyce", "Victoria", "Ruth", "Lauren", "Kelly", "Christina",
+    "Joan", "Evelyn", "Judith", "Hannah", "Megan", "Cheryl", "Madison", "Sara",
+    "Janice", "Kathryn", "Abigail", "Sophia", "Alice", "Isabella", "Julia", "Grace",
+]
+_WEST_LAST = [
+    "Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis",
+    "Rodriguez", "Martinez", "Hernandez", "Lopez", "Gonzalez", "Wilson", "Anderson",
+    "Thomas", "Taylor", "Moore", "Jackson", "Martin", "Lee", "Perez", "Thompson",
+    "White", "Harris", "Sanchez", "Clark", "Ramirez", "Lewis", "Robinson", "Walker",
+    "Young", "Allen", "King", "Wright", "Scott", "Torres", "Nguyen", "Hill", "Flores",
+    "Green", "Adams", "Nelson", "Baker", "Hall", "Rivera", "Campbell", "Mitchell",
+    "Carter", "Roberts", "Gomez", "Phillips", "Evans", "Turner", "Diaz", "Parker",
+    "Cruz", "Edwards", "Collins", "Reyes", "Stewart", "Morris", "Murphy", "Cook",
+    "Rogers", "Morgan", "Cooper", "Peterson", "Bailey", "Reed", "Kelly", "Howard",
+    "Ramos", "Cox", "Ward", "Richardson", "Watson", "Brooks", "Chavez", "Wood",
+    "Bennett", "Gray", "Mendoza", "Ruiz", "Hughes", "Price", "Alvarez", "Patel",
+]
+
+_MALE_FIRST = [n for n in _FIRST_NAMES[:20] + ["Karan", "Nikhil", "Sameer", "Arnav", "Dev"]] \
+    + _MALE_FIRST_EXTRA
+_FEMALE_FIRST = [n for n in _FIRST_NAMES[20:40] + ["Ira", "Tara", "Zoya", "Mira", "Anaya"]] \
+    + _FEMALE_FIRST_EXTRA
+_LAST_NAMES = _LAST_NAMES + _LAST_NAMES_EXTRA
+_ALL_FIRST = _MALE_FIRST + _FEMALE_FIRST
+
+
+def _style_from_country(country: Any) -> str:
+    """Map a request's country to a name/address pool style."""
+    c = str(country or "").strip().lower()
+    if not c:
+        return "india"                      # DataNova's default context
+    if any(k in c for k in ("india", "indian")):
+        return "india"
+    if any(k in c for k in ("us", "usa", "u.s", "america", "united states",
+                            "uk", "u.k", "united kingdom", "britain", "england",
+                            "canada", "australia", "europe")):
+        return "western"
+    return "india"
+
+
+def _name_pools(style: str = "india") -> Tuple[List[str], List[str], List[str]]:
+    """(male first, female first, last) pools for the requested context."""
+    if style == "western":
+        return _WEST_MALE_FIRST, _WEST_FEMALE_FIRST, _WEST_LAST
+    return _MALE_FIRST, _FEMALE_FIRST, _LAST_NAMES
 
 _STREET_NAMES = [
     "MG Road", "Station Road", "Park Street", "Ring Road", "Mall Road",
@@ -167,21 +263,32 @@ def _dist_split(dist: Optional[Dict[str, Any]], pool: List[str]) -> Tuple[List[s
 
 
 class NameGenerator(SemanticGenerator):
-    """Plausible synthetic Indian names (first + surname)."""
+    """
+    Plausible synthetic names (first + surname) from a large controlled pool.
+
+    The pool follows the dataset's context: Indian names by default, western
+    names when the request's country says so. With a gender column present the
+    first name matches the row's gender. Duplicate full names are possible in
+    large datasets (no external name service is used) but the pools are large
+    enough that no handful of names dominates.
+    """
     semantic_type = "person_name"
 
     def generate(self, n, rng, context=None):
-        gender = (context or {}).get("gender_series")  # optional coordination
+        ctx = context or {}
+        gender = ctx.get("gender_series")  # optional coordination
+        style = ctx.get("style") or _style_from_country(ctx.get("country"))
+        male, female, last = _name_pools(style)
         out: List[Any] = []
         for i in range(n):
             g = gender[i] if gender is not None else None
-            if g == "Male":
-                first = rng.choice(_MALE_FIRST)
-            elif g == "Female":
-                first = rng.choice(_FEMALE_FIRST)
+            if g in ("Male", "M", "male"):
+                first = rng.choice(male)
+            elif g in ("Female", "F", "female"):
+                first = rng.choice(female)
             else:
-                first = rng.choice(_FIRST_NAMES)
-            out.append(f"{first} {rng.choice(_LAST_NAMES)}")
+                first = rng.choice(male + female)
+            out.append(f"{first} {rng.choice(last)}")
         return out
 
 
@@ -260,22 +367,80 @@ class EmailGenerator(SemanticGenerator):
         return out
 
 
+# Buildings make Indian addresses read like real ones ("Flat 204, Green
+# Residency, ...") instead of bare number+street tokens.
+_BUILDINGS = [
+    "Green Residency", "Shanti Apartments", "Lake View Heights", "Sunrise Enclave",
+    "Om Sai Chambers", "Lotus Apartments", "Sagar Apartments", "Vasant Vihar",
+]
+
+# Generic non-Indian street/locality names for datasets from other countries.
+_W_STREETS = [
+    "Oak Street", "Maple Avenue", "Elm Street", "Park Avenue", "Cedar Lane",
+    "Washington Street", "Highland Road", "Ridge Drive", "Sunnyvale Lane",
+]
+_W_LOCALITIES = [
+    "Downtown", "Riverside", "Greenfield", "Hilltop", "West End", "Brookside",
+    "Northgate", "Fairview",
+]
+_W_CITIES = [
+    "Springfield", "Riverton", "Fairview", "Georgetown", "Salem", "Madison",
+    "Clinton", "Ashland", "Burlington", "Milton",
+]
+
+
+def _address_style(ctx: Dict[str, Any], city_series, state_series) -> str:
+    """Indian addresses for Indian places, generic western otherwise."""
+    style = ctx.get("style")
+    if style in ("india", "western"):
+        return style
+    vals = [str(v) for v in (list(city_series or [])[:50] + list(state_series or [])[:50]) if v]
+    if vals:
+        indian = set(_STATE_CITIES) | {c for cs in _STATE_CITIES.values() for c in cs}
+        hits = sum(1 for v in vals if v in indian)
+        return "india" if hits >= max(1, len(vals) // 2) else "western"
+    # No place columns to inspect: follow the request's country, else default.
+    return _style_from_country(ctx.get("country"))
+
+
 class AddressGenerator(SemanticGenerator):
-    """Synthetic address strings; NOT real addresses."""
+    """
+    Plausible synthetic address strings; NOT real addresses and never copied
+    from real people. Indian style: house/building, street, locality, city,
+    state and (when a PIN column is wired) a PIN-code-shaped tail. Other
+    contexts get a generic street/city/state form built from the dataset's own
+    city and state values.
+    """
     semantic_type = "address"
 
     def generate(self, n, rng, context=None):
-        city_series = (context or {}).get("city_series")
-        state_series = (context or {}).get("state_series")
+        ctx = context or {}
+        city_series = ctx.get("city_series")
+        state_series = ctx.get("state_series")
+        pin_series = ctx.get("pincode_series")
+        style = _address_style(ctx, city_series, state_series)
         out: List[Any] = []
         for i in range(n):
             house = rng.randint(1, 999)
-            street = rng.choice(_STREET_NAMES)
-            locality = rng.choice(_LOCALITIES)
-            city = city_series[i] if city_series is not None else rng.choice(list(_STATE_CITIES.items()))[1][0]
+            if city_series is not None:
+                city = city_series[i]
+            elif style == "india":
+                city = rng.choice(list(_STATE_CITIES.items()))[1][0]
+            else:
+                city = rng.choice(_W_CITIES)
             state = state_series[i] if state_series is not None else ""
-            tail = f", {state}" if state else ""
-            out.append(f"{house} {street}, {locality}, {city}{tail}")
+            pin = pin_series[i] if pin_series is not None else None
+            if style == "india":
+                head = (f"{rng.choice(('Flat', 'House No.', 'Apartment'))} {house}, "
+                        f"{rng.choice(_BUILDINGS)}, {rng.choice(_STREET_NAMES)}, "
+                        f"{rng.choice(_LOCALITIES)}")
+                place = f"{city}" + (f", {state}" if state else "")
+                if pin:
+                    place += f" {pin}"
+                out.append(f"{head}, {place}")
+            else:
+                head = f"{house} {rng.choice(_W_STREETS)}, {rng.choice(_W_LOCALITIES)}"
+                out.append(f"{head}, {city}" + (f", {state}" if state else ""))
         return out
 
 

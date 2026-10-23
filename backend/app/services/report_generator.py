@@ -119,13 +119,32 @@ def _info_table(rows: List[List[str]]) -> Table:
 # ---------------------------------------------------------------------------
 
 def _quantile_chart(col: Dict[str, Any]) -> Optional[Image]:
-    """Grouped bars: real vs synthetic quantiles for a numeric column."""
+    """
+    Grouped bars: real vs synthetic quantiles for a numeric column.
+
+    Validates the stored quantiles first: they may contain None (a numeric
+    column with no computable stats, e.g. all-missing values). Charting only
+    when BOTH sides have at least 3 finite numbers at the same positions —
+    never inventing values for missing entries.
+    """
     stats = col.get("stats") or {}
     q = stats.get("quantiles") or {}
-    real, synth = q.get("real") or [], q.get("synthetic") or []
-    if len(real) < 3 or len(synth) < 3:
-        return None
-    labels = ["min", "Q25", "median", "Q75", "max"][: len(real)]
+    real_all, synth_all = q.get("real") or [], q.get("synthetic") or []
+
+    def _finite(v: Any) -> bool:
+        try:
+            return v is not None and float(v) == float(v)   # not None, not NaN
+        except (TypeError, ValueError):
+            return False
+
+    pairs = [(float(r), float(s))
+             for r, s in zip(real_all, synth_all)
+             if _finite(r) and _finite(s)]
+    if len(pairs) < 3:
+        return None            # not enough VALID numbers to draw honestly
+    real = [p[0] for p in pairs]
+    synth = [p[1] for p in pairs]
+    labels = ["min", "Q25", "median", "Q75", "max"][: len(pairs)]
     try:
         import matplotlib
         matplotlib.use("Agg")
@@ -195,10 +214,25 @@ def _category_chart(col: Dict[str, Any]) -> Optional[Image]:
 
 
 def _matrix_heatmap(matrix: List[List[float]], cols: List[str], title: str) -> Optional[Image]:
-    """Association-matrix heatmap from the stored evaluation payload."""
+    """
+    Association-matrix heatmap from the stored evaluation payload.
+
+    Validates the matrix first: cells may be None/NaN (e.g. association with
+    a constant column is undefined). Draws only a fully finite, square matrix.
+    """
     if not matrix or not cols:
         return None
     n = len(cols)
+
+    def _finite(v: Any) -> bool:
+        try:
+            return v is not None and float(v) == float(v)
+        except (TypeError, ValueError):
+            return False
+
+    if len(matrix) != n or any(len(row) != n for row in matrix) \
+            or not all(_finite(v) for row in matrix for v in row):
+        return None            # incomplete or non-numeric: skip the chart
     try:
         import matplotlib
         matplotlib.use("Agg")
@@ -206,6 +240,7 @@ def _matrix_heatmap(matrix: List[List[float]], cols: List[str], title: str) -> O
     except ImportError:
         return None
 
+    matrix = [[float(v) for v in row] for row in matrix]
     fig, ax = plt.subplots(figsize=(4.4, 3.9), dpi=200)
     im = ax.imshow(matrix, cmap="Greens", vmin=0, vmax=1)
     ax.set_xticks(range(n))
@@ -506,17 +541,21 @@ def generate_report(project: Dict[str, Any], out_path: Path) -> Path:
         numeric_q_rows: List[List[str]] = [["Column", "Stat", "Real", "Synthetic"]]
 
         for c in evalr.get("column_results") or []:
-            st = c.get("stats")
+            st = c.get("stats") or {}
             if st:
                 def med(i: int) -> Any:
                     q = st.get("quantiles") or {}
                     r = (q.get("real") or [None] * 5)
                     s = (q.get("synthetic") or [None] * 5)
                     return (r[i] if len(r) > i else None, s[i] if len(s) > i else None)
+                mean_r = (st.get("mean") or {}).get("real")
+                mean_s = (st.get("mean") or {}).get("synthetic")
+                std_r = (st.get("std") or {}).get("real")
+                std_s = (st.get("std") or {}).get("synthetic")
                 rm, sm = med(2)
                 numeric_rows.append([
-                    str(c.get("column")), _fmt(st["mean"]["real"]), _fmt(st["mean"]["synthetic"]),
-                    _fmt(rm), _fmt(sm), _fmt(st["std"]["real"]), _fmt(st["std"]["synthetic"]),
+                    str(c.get("column")), _fmt(mean_r), _fmt(mean_s),
+                    _fmt(rm), _fmt(sm), _fmt(std_r), _fmt(std_s),
                 ])
                 for label, idx in (("min", 0), ("Q25", 1), ("Q75", 3), ("max", 4)):
                     rv, sv = med(idx)

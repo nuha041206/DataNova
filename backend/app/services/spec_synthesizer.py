@@ -38,9 +38,10 @@ def _rng(seed: Optional[int]) -> random.Random:
 
 
 # Ordered so dependencies are generated first (age before date_of_birth so
-# dates of birth can follow the generated ages)
+# dates of birth can follow the generated ages; pincode before address so
+# addresses can append the row's PIN-code-shaped tail).
 _DEPENDENCY_ORDER = [
-    "gender", "state", "country", "city", "address", "indian_pincode",
+    "gender", "state", "country", "city", "indian_pincode", "address",
     "person_name", "email", "age", "date_of_birth", "salary", "currency",
 ]
 
@@ -67,8 +68,11 @@ def _context_for(col: Dict[str, Any], series: Dict[str, List[Any]],
                      if c["semantic_type"] == semantic and c["name"] in series), None)
 
     gender_col = _dep("gender")
-    if sem == "person_name" and gender_col:
-        ctx["gender_series"] = series[gender_col]
+    if sem == "person_name":
+        if gender_col:
+            ctx["gender_series"] = series[gender_col]
+        if country:
+            ctx["country"] = country       # pick a country-appropriate name pool
     if sem == "email":
         name_col = _dep("person_name")
         if name_col:
@@ -78,10 +82,15 @@ def _context_for(col: Dict[str, Any], series: Dict[str, List[Any]],
         ctx["state_series"] = series[state_col]
     if sem == "address":
         city_col, state_col2 = _dep("city"), _dep("state")
+        pin_col = _dep("indian_pincode")
         if city_col:
             ctx["city_series"] = series[city_col]
         if state_col2:
             ctx["state_series"] = series[state_col2]
+        if pin_col:
+            ctx["pincode_series"] = series[pin_col]
+        if country:
+            ctx["country"] = country       # non-Indian context -> generic style
     if sem == "indian_pincode" and state_col:
         ctx["state_series"] = series[state_col]
     age_col = _dep("age")

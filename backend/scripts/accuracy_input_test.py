@@ -9,12 +9,19 @@ Covers, with measurable checks:
   C. Generation accuracy (requested schema, formats, ranges, row counts,
      cross-column consistency, no missing/duplicate rows)
   D. Regression of the documented example prompts
+  E. Mode A data quality via the real endpoints (ID-like Age/Address stays
+     human-readable, name diversity, DOB~Age / hire>=DOB / city~state rules)
+  F. PDF report generation (None-quantile crash shape, real project report)
+  G. Download file names (short, meaningful, collision-safe, legacy files)
 
 Run:  python -X utf8 scripts/accuracy_input_test.py
 Every check prints PASS/FAIL with its measured value; a summary follows.
 """
 from __future__ import annotations
 
+import io
+import json
+import random
 import re
 import sys
 import warnings
@@ -25,6 +32,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import pandas as pd
 
+from app import config, database
 from app.services import (
     dataset_analyzer,
     generation_validator,
@@ -33,6 +41,12 @@ from app.services import (
     spec_synthesizer,
 )
 from app.services.dataset_analyzer import DatasetError
+from app.services.report_generator import generate_report as build_report
+
+# PDF text extraction is shared with the source-of-truth script
+# scripts/verify_pdf_text.py (same implementation, no new dependency).
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from verify_pdf_text import extract_pdf_text  # noqa: E402
 
 PASS, FAIL = "PASS", "FAIL"
 results: list = []
@@ -507,6 +521,447 @@ def test_regression():
     check("D6 normal CSV upload path still works", d6)
 
 
+# ---------------------------------------------------------------------------
+# E. Mode A data quality through the REAL endpoints (in-process TestClient)
+# ---------------------------------------------------------------------------
+STATE: dict = {}   # shared across sections E -> F -> G (one in-process app)
+
+
+def _client():
+    if "client" not in STATE:
+        from fastapi.testclient import TestClient
+        from app.main import app
+        STATE["client"] = TestClient(app)
+    return STATE["client"]
+
+
+def _upload_csv(client, df, filename) -> dict:
+    buf = io.StringIO()
+    df.to_csv(buf, index=False)
+    r = client.post("/api/upload", files={
+        "file": (filename, io.BytesIO(buf.getvalue().encode("utf-8")), "text/csv")})
+    assert r.status_code == 200, f"upload failed {r.status_code}: {r.text[:200]}"
+    return r.json()
+
+
+def _generate_rows(client, upload_id, n_rows) -> dict:
+    r = client.post(f"/api/upload/{upload_id}/generate",
+                    json={"n_rows": n_rows, "synthesizer": "GaussianCopula"})
+    assert r.status_code == 200, f"generate failed {r.status_code}: {r.text[:300]}"
+    return r.json()
+
+
+def _download_csv(client, path):
+    r = client.get(path)
+    assert r.status_code == 200, f"download failed {r.status_code}: {r.text[:200]}"
+    cd = r.headers.get("content-disposition", "")
+    m = re.search(r'filename="([^"]+)"', cd)
+    return pd.read_csv(io.StringIO(r.content.decode("utf-8"))), (m.group(1) if m else "")
+
+
+def test_mode_a_data_quality():
+    print("\n== E. Mode A data quality via real endpoints (no server needed) ==")
+    client = _client()
+    rng = random.Random(3)
+    n = 200
+
+    # E1 — Age is a unique sequential counter, Address is unique per row:
+    # SDV auto-classifies both as identifiers (the reported corruption:
+    # 8-digit "ages" and "sdv-id-..." addresses), while the small name pool
+    # used to repeat the same handful of names.
+    def e1():
+        df1 = pd.DataFrame({
+            "Name": [f"{rng.choice(['John', 'Emily', 'Michael', 'Sarah', 'Anna'])} "
+                     f"{rng.choice(['Smith', 'Davis', 'Johnson', 'Brown', 'Wilson'])}"
+                     for _ in range(n)],
+            "Age": list(range(22, 22 + n)),
+            "Address": [f"{i + 1} Unique Lane, Block {i + 1}" for i in range(n)],
+            "Employee ID": [f"EMP{i + 1:05d}" for i in range(n)],
+        })
+        up = _upload_csv(client, df1, "idlike.csv")
+        _generate_rows(client, up["upload_id"], n)
+        syn, dl_name = _download_csv(client, f"/api/upload/{up['upload_id']}/synthetic/download")
+
+        # addresses: human-readable, never id tokens
+        addr = syn["Address"].astype(str)
+        sdv_tok = int(addr.str.contains("sdv-", case=False).sum())
+        uuid_tok = int(addr.str.contains(r"[0-9a-f]{32}", regex=True).sum())
+        multipart = float(addr.str.contains(", ").mean()) * 100
+        with_digit = float(addr.str.contains(r"\d").mean()) * 100
+        # age: within the SOURCE's own range, integer, not a counter, no garbage
+        ages = pd.to_numeric(syn["Age"], errors="coerce")
+        span = 221 - 22
+        tol = max(span * 0.15, 2)
+        in_range = float(((ages >= 22 - tol) & (ages <= 221 + tol)).mean()) * 100
+        garbage = int((ages.abs() >= 10000).sum())
+        seq_frac = float((ages.diff() == 1).mean())
+        ints_ok = bool((ages == ages.round()).all())
+        # names: the 25-combo source pool must not dominate 200 rows
+        names = syn["Name"].astype(str)
+        uniq_pct = names.nunique() / len(names) * 100
+        top_freq = int(names.value_counts().iloc[0])
+        # employee ids keep the source's EMP prefix and stay unique
+        eids = syn["Employee ID"].astype(str)
+        emp_ok = float(eids.str.match(r"^EMP\d+$").mean()) * 100
+        eid_uniq = int(eids.nunique())
+
+        print(f"        addr sdv-tokens={sdv_tok} uuid={uuid_tok} multipart={multipart:.0f}% "
+              f"digit={with_digit:.0f}% | age range=[{ages.min():.0f},{ages.max():.0f}] "
+              f"in_range={in_range:.1f}% garbage={garbage} seq={seq_frac:.3f} ints={ints_ok} "
+              f"| names {names.nunique()}/{len(names)} unique top_freq={top_freq} "
+              f"| emp_prefix={emp_ok:.0f}% uniq={eid_uniq} | dl={dl_name}")
+        assert sdv_tok == 0 and uuid_tok == 0, f"{sdv_tok} sdv-id / {uuid_tok} uuid tokens in Address"
+        assert multipart >= 95 and with_digit >= 95, (multipart, with_digit)
+        assert in_range == 100, f"{100 - in_range:.1f}% ages outside the source range"
+        assert garbage == 0, f"{garbage} ID-like garbage values (>=10000) in Age"
+        assert seq_frac < 0.5, f"Age follows a +1 counter (seq={seq_frac:.2f})"
+        assert ints_ok, "Age contains non-integer values"
+        assert uniq_pct >= 90 and top_freq <= 5, f"name diversity too low: {uniq_pct:.1f}% unique, top x{top_freq}"
+        assert emp_ok == 100 and eid_uniq == len(eids), (emp_ok, eid_uniq)
+        return f"age=[{ages.min():.0f},{ages.max():.0f}] names={names.nunique()}/{len(names)}"
+    check("E1 unique Age/Address stay human-readable, names diverse", e1)
+
+    # E2 — realistic Indian employee dataset: cross-column consistency
+    first = ["Rahul", "Priya", "Aarav", "Ananya", "Vikram", "Sneha", "Karan", "Isha", "Rohit", "Meera"]
+    last = ["Sharma", "Patel", "Singh", "Gupta", "Reddy", "Iyer"]
+    cities = {"Mumbai": "Maharashtra", "Pune": "Maharashtra", "Delhi": "Delhi"}
+    n2, rows_n = 250, 300
+    rows = []
+    for i in range(n2):
+        city = rng.choice(list(cities))
+        age = rng.randint(22, 58)
+        dob_year = 2026 - age
+        hire_year = min(2024, dob_year + 20 + rng.randint(0, 15))
+        rows.append({
+            "Full Name": f"{rng.choice(first)} {rng.choice(last)}",
+            "Gender": rng.choice(["Male", "Female"]),
+            "Department": rng.choice(["HR", "IT", "Finance"]),
+            "Job Title": rng.choice(["Executive", "Engineer", "Accountant"]),
+            "Salary": rng.randint(3, 25) * 100000,
+            "Date of Birth": f"{dob_year}-{rng.randint(1, 12):02d}-{rng.randint(1, 28):02d}",
+            "Age": age,
+            "Hire Date": f"{hire_year}-{rng.randint(1, 12):02d}-{rng.randint(1, 28):02d}",
+            "Employee ID": f"EMP{i + 1:05d}",
+            "Address": f"{rng.randint(1, 999)} Oak Street, Locality {i}",
+            "Mobile Number": f"98{10000000 + i}",
+            "City": city,
+            "State": cities[city],
+            "Email": f"user{i}@example.com",
+        })
+    df2 = pd.DataFrame(rows)
+
+    def e2():
+        up = _upload_csv(client, df2, "employees.csv")
+        STATE["employee_upload"] = up
+        gen = _generate_rows(client, up["upload_id"], rows_n)
+        syn, _ = _download_csv(client, f"/api/upload/{up['upload_id']}/synthetic/download")
+        STATE["employee_synth"] = syn
+        STATE["employee_rows"] = len(syn)
+
+        ages = pd.to_numeric(syn["Age"], errors="coerce")
+        dob = pd.to_datetime(syn["Date of Birth"], errors="coerce")
+        hire = pd.to_datetime(syn["Hire Date"], errors="coerce")
+        gap = ((pd.Timestamp.today() - dob).dt.days / 365.25 - ages).abs()
+        dob_age_ok = float((gap <= 1).mean()) * 100
+        hire_viol = int((hire < dob).sum())
+
+        city_state_ok = float(sum(
+            cities.get(c) == s for c, s in
+            zip(syn["City"].astype(str), syn["State"].astype(str))) / len(syn)) * 100
+
+        mob = syn["Mobile Number"].astype(str).str.replace(r"\.0$", "", regex=True)
+        mob_ok = float(mob.str.match(r"^[6-9]\d{9}$").mean()) * 100
+
+        addr = syn["Address"].astype(str)
+        addr_ok = float(sum(
+            c in a and s in a for c, s, a in
+            zip(syn["City"].astype(str), syn["State"].astype(str), addr)) / len(syn)) * 100
+
+        names = syn["Full Name"].astype(str)
+        email_ok = float(sum(
+            nm.split()[0].lower() in e for nm, e in
+            zip(names, syn["Email"].astype(str))) / len(syn)) * 100
+
+        # the misdetected "Job Title" must stay categories, never become names
+        titles = set(syn["Job Title"].astype(str))
+        src_titles = set(df2["Job Title"].astype(str))
+        title_ok = titles.issubset(src_titles)
+
+        in_range = float(((ages >= 22 - 5.4) & (ages <= 58 + 5.4)).mean()) * 100
+        uniq_pct = names.nunique() / len(names) * 100
+        missing = int(syn.isna().sum().sum())
+
+        print(f"        dob~age={dob_age_ok:.1f}% hire<dob={hire_viol} city~state={city_state_ok:.1f}% "
+              f"mobile={mob_ok:.1f}% addr~place={addr_ok:.1f}% email~name={email_ok:.1f}% "
+              f"titles_subset={title_ok} age_range={in_range:.1f}% names={uniq_pct:.0f}% unique "
+              f"missing={missing}")
+        assert dob_age_ok >= 99, dob_age_ok
+        assert hire_viol == 0, f"{hire_viol} hire dates before date of birth"
+        assert city_state_ok >= 99, city_state_ok
+        assert mob_ok == 100, mob_ok
+        assert addr_ok >= 99, addr_ok
+        assert email_ok >= 99, email_ok
+        assert title_ok, f"Job Title invented values: {sorted(titles - src_titles)}"
+        assert in_range == 100, in_range
+        assert uniq_pct >= 80, uniq_pct
+        assert missing == 0, f"{missing} missing cells"
+        assert len(syn) == rows_n, len(syn)
+        assert list(syn.columns) == list(df2.columns), "columns changed"
+        assert gen.get("approach"), "no generation approach reported"
+        return f"rows={len(syn)} approach={gen.get('approach')}"
+    check("E2 employee dataset keeps DOB/hire/city/name/email relationships", e2)
+
+
+# ---------------------------------------------------------------------------
+# F. PDF report generation
+# ---------------------------------------------------------------------------
+def _report_payload(quantiles, with_mean_keys=True) -> dict:
+    """Minimal stored-evaluation payload shaped like evaluation_engine's."""
+    stats = {"quantiles": quantiles}
+    if with_mean_keys:
+        stats["mean"] = {"real": None, "synthetic": None}
+        stats["std"] = {"real": None, "synthetic": None}
+    return {
+        "name": "F fixture", "mode": "upload", "created_at": "2026-10-23 00:46",
+        "dataset_filename": "fixture.csv", "rows_real": 10, "columns": 2,
+        "rows_requested": 10, "rows_synthetic": 10,
+        "fit_seconds": 0.3, "sample_seconds": 0.1,
+        "analysis": {"rows": 10, "columns": 2, "total_missing_cells": 0,
+                     "duplicate_rows": 0, "constant_columns": [], "id_like_columns": [],
+                     "dtypes_summary": {}, "warnings": []},
+        "detection": {}, "ml_utility": None, "explanation": {}, "warnings": [],
+        "evaluation": {
+            "data_nova_score": {"value": None, "components": {"statistical": None}},
+            "column_overlap": {"shared": ["Age"], "only_in_real": [], "only_in_synthetic": []},
+            "row_counts": {"real": 10, "synthetic": 10},
+            "column_results": [
+                {"column": "Age", "similarity": None, "stats": stats},
+                {"column": "Dept", "similarity": 0.5,
+                 "proportions": [{"category": "HR", "real_share": None, "synthetic_share": 0.5}]},
+            ],
+            "correlation_comparison": {"mean_abs_difference": None,
+                                        "real_matrix": [[0.1, None], [None, 1.0]],
+                                        "synthetic_matrix": [[0.1, 0.2], [0.2, 1.0]],
+                                        "columns": ["Age", "Dept"]},
+            "target_comparison": {"kind": "classification", "similarity": None},
+        },
+        "synth_preview": {"file": "z.csv", "rows": None},
+    }
+
+
+def _assert_valid_pdf(path: Path, min_bytes: int) -> int:
+    data = path.read_bytes()
+    assert data[:5] == b"%PDF-", f"not a PDF: {data[:16]!r}"
+    assert len(data) >= min_bytes, f"suspiciously small PDF: {len(data)} bytes"
+    return len(data)
+
+
+def _preclean_fixture_files() -> None:
+    """Remove residue of a previous crashed run so names stay deterministic."""
+    for name in ("indian-customer-dataset.csv", "indian-customer-dataset_2.csv",
+                 "indian-customer-messy.csv", "legacy-20240101-synthetic-1030.csv",
+                 "employee-records-dataset.csv", "employee-records-dataset_2.csv"):
+        try:
+            (config.DATA_DIR / "synthetic" / name).unlink(missing_ok=True)
+        except OSError:
+            pass
+    try:
+        (config.REPORT_DIR / "indian-customer-report.pdf").unlink(missing_ok=True)
+    except OSError:
+        pass
+
+
+def test_report_generation():
+    print("\n== F. PDF report generation ==")
+    _preclean_fixture_files()
+
+    # F1 — the reported crash: an evaluation whose quantiles are ALL None
+    # (empty numeric column after dropping missing values) used to raise
+    # `TypeError: unsupported operand type(s) for +: 'int' and 'NoneType'`.
+    def f1():
+        import tempfile
+        out = Path(tempfile.mkdtemp()) / "all_none.pdf"
+        payload = _report_payload({"real": [None] * 5, "synthetic": [None] * 5})
+        build_report(payload, out)
+        size = _assert_valid_pdf(out, 100_000)
+        try:
+            out.unlink()
+        except OSError:
+            pass
+        return f"size={size} bytes"
+    check("F1 all-None quantiles report generates (was: int + None crash)", f1)
+
+    # F2 — partial-None quantiles and stats entries without mean/std keys
+    def f2():
+        import tempfile
+        out = Path(tempfile.mkdtemp()) / "partial_none.pdf"
+        payload = _report_payload(
+            {"real": [1, None, 3, None, 5], "synthetic": [2, 4, None, 8, 10]},
+            with_mean_keys=False)   # column stats lacking mean/std entirely
+        build_report(payload, out)
+        size = _assert_valid_pdf(out, 100_000)
+        try:
+            out.unlink()
+        except OSError:
+            pass
+        return f"size={size} bytes"
+    check("F2 partial-None / missing-key stats render without error", f2)
+
+    # F3 — real end-to-end: evaluate -> save project -> report -> download
+    def f3():
+        client = _client()
+        up = STATE["employee_upload"]
+        uid = up["upload_id"]
+
+        ev = client.post("/api/evaluate", json={"upload_id": uid})
+        assert ev.status_code == 200, f"evaluate {ev.status_code}: {ev.text[:200]}"
+        evaluation = ev.json()
+
+        save = client.post("/api/projects/save", json={
+            "name": "Indian Customer Synthetic Dataset",
+            "mode": "upload",
+            "upload_id": uid,
+            "dataset_filename": up["filename"],
+            "rows_real": up["analysis"]["rows"],
+            "columns": up["analysis"]["columns"],
+            "rows_synthetic": STATE["employee_rows"],
+            "synthesizer": "GaussianCopula",
+            "analysis": up["analysis"],
+            "detection": up["detection"],
+            "evaluation": evaluation,
+        })
+        assert save.status_code == 200, f"save {save.status_code}: {save.text[:200]}"
+        pid1 = save.json()["project_id"]
+        STATE["pid1"] = pid1
+
+        rep = client.post(f"/api/projects/{pid1}/report")
+        assert rep.status_code == 200, f"report {rep.status_code}: {rep.text[:300]}"
+        assert rep.json()["filename"] == "indian-customer-report.pdf", rep.json()
+        STATE["report_filename"] = rep.json()["filename"]
+
+        dl = client.get(f"/api/projects/{pid1}/report/download")
+        assert dl.status_code == 200, f"report download {dl.status_code}"
+        assert dl.content[:5] == b"%PDF-", dl.content[:16]
+        assert len(dl.content) > 100_000, len(dl.content)
+
+        # the report must contain the project's own information
+        text = extract_pdf_text(Path(rep.json()["report_path"]))
+        norm = re.sub(r"\s+", " ", text.encode("ascii", "ignore").decode())
+        needles = ["Indian Customer Synthetic Dataset", "PROJECT REPORT",
+                   "Expanded Dataset (Mode A)", "DataNova Score", "employees.csv"]
+        missing = [x for x in needles if x not in norm]
+        assert not missing, f"report is missing {missing} (chars={len(text)})"
+        return f"pdf={len(dl.content)} bytes checks={len(needles)}/{len(needles)}"
+    check("F3 real project report is valid PDF with correct project info", f3)
+
+
+# ---------------------------------------------------------------------------
+# G. Download file names: short, meaningful, collision-safe
+# ---------------------------------------------------------------------------
+def test_filenames():
+    print("\n== G. Download file names (short, meaningful, collision-safe) ==")
+    client = _client()
+    up = STATE["employee_upload"]
+    uid = up["upload_id"]
+
+    # G1 session download: no date/time stamps, short subject stem
+    def g1():
+        syn, name = _download_csv(client, f"/api/upload/{uid}/synthetic/download")
+        assert name == "employees-dataset.csv", name
+        assert len(name) <= 40 and not re.search(r"\d{8}", name), name
+        assert len(syn) == STATE["employee_rows"], len(syn)
+        return name
+    check("G1 session download name is short and stamp-free", g1)
+
+    # G2 project save names the CSV after the project's subject
+    # ("Employee Records Dataset" -> employee-records-dataset.csv;
+    #  the "Indian Customer..." stem belongs to the F3 project)
+    def g2():
+        save = client.post("/api/projects/save", json={
+            "name": "Employee Records Dataset", "mode": "upload",
+            "upload_id": uid, "dataset_filename": up["filename"],
+            "rows_real": up["analysis"]["rows"], "columns": up["analysis"]["columns"],
+        })
+        assert save.status_code == 200, save.text[:200]
+        j = save.json()
+        assert j["synthetic_file"] == "employee-records-dataset.csv", j
+        assert (config.DATA_DIR / "synthetic" / j["synthetic_file"]).exists(), j
+        STATE["pid1b"] = j["project_id"]
+        return j["synthetic_file"]
+    check("G2 project CSV is named after the subject (not a date-time slug)", g2)
+
+    # G3 a second project with the same subject gets a collision suffix
+    def g3():
+        save = client.post("/api/projects/save", json={
+            "name": "Employee Records Dataset Copy", "mode": "upload",
+            "upload_id": uid, "dataset_filename": up["filename"],
+        })
+        assert save.status_code == 200, save.text[:200]
+        j = save.json()
+        assert j["synthetic_file"] == "employee-records-dataset_2.csv", j
+        STATE["pid2"] = j["project_id"]
+        return j["synthetic_file"]
+    check("G3 filename collision gets a _2 suffix (no overwrite)", g3)
+
+    # G4 report regeneration overwrites the project's OWN file
+    def g4():
+        pid1 = STATE["pid1"]
+        first = client.post(f"/api/projects/{pid1}/report")
+        second = client.post(f"/api/projects/{pid1}/report")
+        assert first.status_code == 200 and second.status_code == 200, \
+            (first.status_code, second.status_code)
+        fn2 = second.json()["filename"]
+        assert fn2 == "indian-customer-report.pdf", f"own report renamed to {fn2}"
+        assert not Path(second.json()["report_path"]).name.endswith("_2.pdf"), fn2
+        return fn2
+    check("G4 report regeneration keeps the same file (own overwrite)", g4)
+
+    # G5 messy copy keeps the "messy.csv" convention
+    def g5():
+        pid1 = STATE["pid1"]
+        r = client.post(f"/api/projects/{pid1}/messy", json={"missing_values": 5.0})
+        assert r.status_code == 200, f"messy {r.status_code}: {r.text[:200]}"
+        assert r.json()["file"] == "indian-customer-messy.csv", r.json()["file"]
+        syn, name = _download_csv(client, f"/api/projects/{pid1}/messy/download")
+        assert name == "indian-customer-messy.csv", name
+        return name
+    check("G5 messy copy named '<subject>-messy.csv'", g5)
+
+    # G6 session messy download: no time stamps either
+    def g6():
+        r = client.post(f"/api/upload/{uid}/messy", json={"missing_values": 5.0})
+        assert r.status_code == 200, f"session messy {r.status_code}: {r.text[:200]}"
+        syn, name = _download_csv(client, f"/api/upload/{uid}/messy/download")
+        assert name == "employees-messy.csv", name
+        assert not re.search(r"\d{4}\.csv$", name), name
+        return name
+    check("G6 session messy download name is short and stamp-free", g6)
+
+    # G7 a project saved BEFORE the rename still downloads (legacy on-disk name)
+    def g7():
+        pid2 = STATE["pid2"]
+        legacy = "legacy-20240101-synthetic-1030.csv"
+        legacy_path = config.DATA_DIR / "synthetic" / legacy
+        legacy_path.parent.mkdir(exist_ok=True)
+        legacy_path.write_text("col_a,col_b\n1,2\n3,4\n", encoding="utf-8")
+        database.update_project(pid2, {"synth_preview": json.dumps({"file": legacy, "rows": 2})})
+        syn, name = _download_csv(client, f"/api/projects/{pid2}/synthetic/download")
+        assert list(syn.columns) == ["col_a", "col_b"], list(syn.columns)
+        assert legacy not in name, f"legacy long name leaked into download: {name}"
+        assert name == "employee-records-dataset.csv", name
+        return f"{name} (stored as {legacy})"
+    check("G7 legacy stored file still downloads under a short name", g7)
+
+    # --- best-effort cleanup of everything this run created ---
+    for pid in (STATE.pop("pid1", None), STATE.pop("pid1b", None), STATE.pop("pid2", None)):
+        if pid:
+            try:
+                client.delete(f"/api/projects/{pid}")
+            except Exception:
+                pass
+    _preclean_fixture_files()
+
+
 def main():
     print("DataNova accuracy & input-handling test")
     print("=" * 78)
@@ -514,6 +969,9 @@ def main():
     test_prompt_validation()
     test_generation_accuracy()
     test_regression()
+    test_mode_a_data_quality()
+    test_report_generation()
+    test_filenames()
 
     print("\n" + "=" * 78)
     for mark, name in results:
