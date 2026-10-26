@@ -1,0 +1,57 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * DataNova brand palette
+ *   #400202  darkest maroon  → sidebar, headings, strong branding elements
+ *   #6D0808  primary red     → primary buttons, active nav, accents
+ *   #757D6F  muted sage      → secondary accents, synthetic-data chart color
+ *   #EEEAD7  cream           → tinted backgrounds, highlight cards
+ */
+:root {
+  --dn-dark: #400202;
+  --dn-red: #6d0808;
+  --dn-muted: #757d6f;
+  --dn-cream: #eeead7;
+
+  --background: 0 0% 100%;
+  --foreground: 356 92% 13%;          /* #400202 */
+  --card: 0 0% 100%;
+  --card-foreground: 356 92% 13%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 356 92% 13%;
+  --primary: 0 95% 23%;               /* #6D0808 */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 356 95% 13%;           /* #400202 */
+  --secondary-foreground: 0 0% 100%;
+  --muted: 45 39% 94%;                /* cream-tinted neutral */
+  --muted-foreground: 96 8% 38%;
+  --accent: 48 47% 89%;               /* light #EEEAD7 tint */
+  --accent-foreground: 356 95% 13%;
+  --destructive: 0 72% 46%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 45 20% 86%;
+  --input: 45 20% 82%;
+  --ring: 0 95% 23%;
+  --radius: 0.5rem;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+}
+
+/* Thin, modern scrollbars for data tables */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.25);
+  border-radius: 8px;
+}

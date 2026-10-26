@@ -1,0 +1,1201 @@
+customerID,gender,SeniorCitizen,Contract,tenure,MonthlyCharges,TotalCharges,Churn
+C00000,Female,0,One year,44,47.26,2079.44,0
+C00001,Male,0,One year,59,31.26,1844.34,0
+C00002,Male,1,Month-to-month,46,69.12,3179.52,0
+C00003,Female,0,One year,43,40.44,1738.92,0
+C00004,Female,1,One year,34,113.43,3856.62,1
+C00005,Male,0,One year,18,18.41,331.38,0
+C00006,Female,1,Month-to-month,20,32.61,652.2,0
+C00007,Male,0,Month-to-month,53,43.14,2286.42,0
+C00008,Female,0,Month-to-month,5,38.29,191.45,1
+C00009,Female,0,Month-to-month,6,41.03,246.18,1
+C00010,Male,0,Month-to-month,29,84.92,2462.68,1
+C00011,Male,0,Month-to-month,55,51.41,2827.55,1
+C00012,Male,1,One year,47,80.73,3794.31,0
+C00013,Male,1,Month-to-month,42,108.81,4570.02,0
+C00014,Male,0,Two year,38,79.46,3019.48,0
+C00015,Male,0,Month-to-month,8,88.84,710.72,1
+C00016,Male,0,One year,24,55.28,1326.72,1
+C00017,Female,0,Month-to-month,6,34.29,205.74,1
+C00018,Male,0,Month-to-month,54,50.7,2737.8,0
+C00019,Female,0,One year,54,116.36,6283.44,1
+C00020,Male,0,Two year,19,81.42,1546.98,0
+C00021,Female,0,Month-to-month,21,46.31,972.51,0
+C00022,Female,1,Month-to-month,23,63.99,1471.77,1
+C00023,Male,0,One year,64,103.22,6606.08,0
+C00024,Male,1,One year,35,86.18,3016.3,1
+C00025,Male,0,Month-to-month,55,75.19,4135.45,1
+C00026,Female,0,Month-to-month,32,108.29,3465.28,1
+C00027,Male,0,Month-to-month,50,86.59,4329.5,0
+C00028,Male,0,Two year,38,83.56,3175.28,0
+C00029,Female,0,Month-to-month,20,37.36,747.2,0
+C00030,Female,1,Month-to-month,63,28.85,1817.55,0
+C00031,Female,0,Two year,51,116.44,5938.44,0
+C00032,Female,0,Month-to-month,55,79.08,4349.4,1
+C00033,Male,0,Month-to-month,68,60.4,4107.2,1
+C00034,Male,0,Month-to-month,18,78.08,1405.44,1
+C00035,Female,0,Month-to-month,7,24.3,170.1,0
+C00036,Male,0,Month-to-month,42,101.86,4278.12,0
+C00037,Male,0,Month-to-month,24,40.1,962.4,0
+C00038,Female,0,One year,31,100.06,3101.86,0
+C00039,Male,1,One year,17,72.51,1232.67,0
+C00040,Female,0,Month-to-month,29,46.21,1340.09,1
+C00041,Male,0,One year,28,21.08,590.24,0
+C00042,Male,0,Month-to-month,25,101.22,2530.5,1
+C00043,Female,0,Two year,53,36.0,1908.0,0
+C00044,Female,0,Month-to-month,43,23.28,1001.04,0
+C00045,Male,1,One year,34,95.1,3233.4,1
+C00046,Female,0,Month-to-month,9,53.7,483.3,1
+C00047,Male,0,One year,41,57.71,2366.11,1
+C00048,Male,0,Month-to-month,13,43.2,561.6,0
+C00049,Male,0,One year,23,105.64,2429.72,1
+C00050,Male,0,Month-to-month,30,48.33,1449.9,1
+C00051,Female,1,Two year,11,39.44,433.84,0
+C00052,Female,0,Month-to-month,28,49.54,1387.12,0
+C00053,Female,0,One year,19,38.72,735.68,0
+C00054,Female,1,Two year,61,50.4,3074.4,0
+C00055,Female,0,Two year,62,26.46,1640.52,0
+C00056,Male,1,Month-to-month,1,34.17,34.17,1
+C00057,Female,0,Month-to-month,43,60.54,2603.22,0
+C00058,Male,0,Month-to-month,46,107.71,4954.66,1
+C00059,Male,0,Month-to-month,27,23.84,643.68,1
+C00060,Male,0,One year,34,39.69,1349.46,0
+C00061,Male,1,Two year,57,110.65,6307.05,1
+C00062,Female,0,Two year,27,108.78,2937.06,1
+C00063,Male,0,Month-to-month,5,87.3,436.5,0
+C00064,Female,0,One year,27,42.53,1148.31,0
+C00065,Female,0,Two year,19,60.82,1155.58,0
+C00066,Male,0,Two year,28,39.54,1107.12,0
+C00067,Female,1,Month-to-month,17,31.12,529.04,0
+C00068,Female,0,Month-to-month,11,56.76,624.36,1
+C00069,Female,0,Two year,70,76.73,5371.1,0
+C00070,Male,0,Month-to-month,10,54.71,547.1,1
+C00071,Female,0,Month-to-month,51,80.3,4095.3,0
+C00072,Female,1,Two year,51,48.22,2459.22,0
+C00073,Female,0,Two year,44,53.28,2344.32,0
+C00074,Male,0,Two year,65,98.65,6412.25,0
+C00075,Female,0,One year,1,107.59,107.59,1
+C00076,Female,1,Month-to-month,22,50.85,1118.7,0
+C00077,Female,0,Month-to-month,14,76.29,1068.06,1
+C00078,Male,0,Month-to-month,41,46.37,1901.17,0
+C00079,Male,0,One year,46,23.44,1078.24,1
+C00080,Male,0,Month-to-month,64,93.26,5968.64,0
+C00081,Female,0,One year,27,35.44,956.88,0
+C00082,Female,0,Month-to-month,17,61.42,1044.14,1
+C00083,Male,0,One year,66,67.68,4466.88,0
+C00084,Male,0,Month-to-month,48,36.82,1767.36,0
+C00085,Male,0,Month-to-month,55,27.64,1520.2,1
+C00086,Female,0,Month-to-month,32,53.5,1712.0,0
+C00087,Female,1,Month-to-month,32,115.13,3684.16,1
+C00088,Male,0,Two year,28,80.74,2260.72,1
+C00089,Male,0,Month-to-month,54,56.9,3072.6,0
+C00090,Female,0,Month-to-month,15,21.97,329.55,1
+C00091,Male,1,One year,70,79.23,5546.1,0
+C00092,Male,0,One year,13,27.41,356.33,0
+C00093,Female,0,Month-to-month,33,73.34,2420.22,0
+C00094,Male,1,Month-to-month,23,94.7,2178.1,1
+C00095,Female,0,Month-to-month,46,61.21,2815.66,1
+C00096,Female,0,One year,49,48.54,2378.46,0
+C00097,Male,0,Month-to-month,66,22.83,1506.78,1
+C00098,Male,0,Month-to-month,57,20.53,1170.21,1
+C00099,Female,0,Month-to-month,18,61.86,1113.48,1
+C00100,Male,0,One year,15,108.1,1621.5,0
+C00101,Female,0,Month-to-month,63,42.89,2702.07,0
+C00102,Male,0,Two year,35,76.55,2679.25,1
+C00103,Female,1,Month-to-month,7,87.8,614.6,1
+C00104,Male,0,One year,59,24.2,1427.8,0
+C00105,Male,0,Month-to-month,47,33.62,1580.14,1
+C00106,Male,0,Month-to-month,2,51.79,103.58,1
+C00107,Male,0,Month-to-month,56,86.35,4835.6,1
+C00108,Female,0,Two year,44,62.78,2762.32,0
+C00109,Male,0,Two year,44,92.89,4087.16,0
+C00110,Female,1,Month-to-month,62,106.49,6602.38,0
+C00111,Male,0,Month-to-month,36,95.35,3432.6,1
+C00112,Male,0,Two year,33,119.21,3933.93,1
+C00113,Female,1,Month-to-month,44,94.94,4177.36,1
+C00114,Male,0,Month-to-month,15,104.92,1573.8,0
+C00115,Male,0,Month-to-month,11,102.9,1131.9,1
+C00116,Female,0,One year,60,92.49,5549.4,0
+C00117,Female,0,One year,16,99.78,1596.48,0
+C00118,Female,0,One year,36,113.34,4080.24,1
+C00119,Female,1,Two year,20,66.47,1329.4,1
+C00120,Female,0,Month-to-month,17,83.11,1412.87,1
+C00121,Male,0,Month-to-month,43,70.52,3032.36,0
+C00122,Male,0,Month-to-month,57,104.81,5974.17,0
+C00123,Female,1,Month-to-month,32,62.0,1984.0,0
+C00124,Male,0,Month-to-month,10,101.61,1016.1,1
+C00125,Male,0,Month-to-month,18,99.53,1791.54,1
+C00126,Female,0,Month-to-month,12,116.11,1393.32,0
+C00127,Male,0,One year,63,43.39,2733.57,0
+C00128,Male,0,Month-to-month,23,90.38,2078.74,0
+C00129,Male,0,Month-to-month,27,95.21,2570.67,0
+C00130,Male,0,One year,6,113.5,681.0,1
+C00131,Male,0,One year,32,110.5,3536.0,1
+C00132,Female,0,One year,65,76.5,4972.5,0
+C00133,Male,0,Two year,30,77.07,2312.1,0
+C00134,Male,0,One year,47,35.06,1647.82,0
+C00135,Female,0,Month-to-month,13,117.45,1526.85,1
+C00136,Male,0,Month-to-month,11,44.01,484.11,1
+C00137,Female,0,One year,52,91.92,4779.84,0
+C00138,Female,0,Month-to-month,5,99.17,495.85,1
+C00139,Female,0,Month-to-month,32,63.0,2016.0,0
+C00140,Male,0,Month-to-month,23,39.54,909.42,1
+C00141,Female,0,Month-to-month,2,37.27,74.54,0
+C00142,Female,1,Month-to-month,38,105.36,4003.68,0
+C00143,Female,0,Month-to-month,69,70.1,4836.9,0
+C00144,Male,0,Two year,5,27.19,135.95,0
+C00145,Male,0,Two year,58,91.14,5286.12,0
+C00146,Female,0,Month-to-month,39,43.52,1697.28,1
+C00147,Female,0,Two year,52,107.39,5584.28,0
+C00148,Male,0,Month-to-month,7,49.58,347.06,0
+C00149,Female,1,Two year,62,38.43,2382.66,0
+C00150,Male,0,Two year,1,26.66,26.66,0
+C00151,Female,0,Month-to-month,65,70.18,4561.7,0
+C00152,Male,0,One year,47,63.98,3007.06,0
+C00153,Female,0,Two year,24,94.63,2271.12,0
+C00154,Female,0,Two year,1,65.39,65.39,0
+C00155,Male,0,Two year,44,53.07,2335.08,0
+C00156,Female,0,One year,7,44.69,312.83,1
+C00157,Male,1,Month-to-month,44,46.37,2040.28,1
+C00158,Male,0,Two year,55,112.64,6195.2,1
+C00159,Male,0,One year,19,34.84,661.96,0
+C00160,Male,0,One year,17,118.79,2019.43,0
+C00161,Male,0,Month-to-month,16,51.35,821.6,0
+C00162,Female,0,One year,16,27.02,432.32,1
+C00163,Female,0,Month-to-month,9,43.37,390.33,0
+C00164,Female,1,One year,18,23.96,431.28,0
+C00165,Male,0,Month-to-month,47,98.58,4633.26,1
+C00166,Female,0,One year,22,70.28,1546.16,0
+C00167,Female,0,Two year,56,52.37,2932.72,0
+C00168,Female,0,Month-to-month,59,85.53,5046.27,0
+C00169,Female,0,Month-to-month,55,82.33,4528.15,1
+C00170,Female,0,Month-to-month,39,113.87,4440.93,1
+C00171,Female,0,Two year,23,116.05,2669.15,0
+C00172,Male,0,One year,67,87.43,5857.81,1
+C00173,Male,1,Month-to-month,15,101.42,1521.3,1
+C00174,Male,0,Month-to-month,33,98.83,3261.39,0
+C00175,Female,1,Month-to-month,33,68.11,2247.63,1
+C00176,Male,0,Month-to-month,53,89.85,4762.05,0
+C00177,Female,0,Two year,39,25.98,1013.22,0
+C00178,Male,0,One year,57,95.32,5433.24,0
+C00179,Male,1,Month-to-month,66,116.11,7663.26,1
+C00180,Male,0,Two year,28,26.67,746.76,0
+C00181,Female,1,Month-to-month,63,103.28,6506.64,1
+C00182,Female,0,Two year,13,113.16,1471.08,1
+C00183,Male,0,Month-to-month,66,41.07,2710.62,0
+C00184,Female,1,One year,13,71.53,929.89,1
+C00185,Female,0,Two year,61,112.64,6871.04,0
+C00186,Female,0,Month-to-month,28,115.94,3246.32,1
+C00187,Female,0,One year,69,31.04,2141.76,0
+C00188,Female,0,Two year,10,53.6,536.0,1
+C00189,Female,0,Month-to-month,34,89.21,3033.14,0
+C00190,Male,0,Month-to-month,65,40.6,2639.0,0
+C00191,Male,0,One year,4,51.13,204.52,0
+C00192,Male,0,Month-to-month,19,20.38,387.22,1
+C00193,Female,0,Month-to-month,6,33.66,201.96,1
+C00194,Male,0,Month-to-month,23,75.36,1733.28,1
+C00195,Female,0,One year,28,84.62,2369.36,0
+C00196,Female,0,Month-to-month,44,84.19,3704.36,1
+C00197,Female,0,Month-to-month,19,97.39,1850.41,1
+C00198,Female,0,Two year,12,60.36,724.32,0
+C00199,Male,0,Month-to-month,13,45.9,596.7,1
+C00200,Female,0,Two year,67,19.59,1312.53,0
+C00201,Male,0,Month-to-month,68,39.08,2657.44,0
+C00202,Female,1,Two year,16,49.86,797.76,0
+C00203,Male,0,One year,14,36.18,506.52,1
+C00204,Female,0,Month-to-month,4,20.05,80.2,1
+C00205,Female,0,Two year,69,34.06,2350.14,0
+C00206,Male,0,Month-to-month,51,85.94,4382.94,0
+C00207,Male,0,Month-to-month,55,82.22,4522.1,1
+C00208,Female,0,Month-to-month,21,113.44,2382.24,0
+C00209,Male,1,One year,46,99.41,4572.86,0
+C00210,Female,0,Month-to-month,5,75.91,379.55,0
+C00211,Male,0,Month-to-month,48,32.03,1537.44,0
+C00212,Male,1,Month-to-month,42,75.54,3172.68,1
+C00213,Female,0,Month-to-month,24,24.28,582.72,1
+C00214,Male,0,Month-to-month,51,61.95,3159.45,0
+C00215,Female,1,Month-to-month,46,57.81,2659.26,0
+C00216,Female,1,Month-to-month,32,61.64,1972.48,0
+C00217,Female,0,Month-to-month,14,46.54,651.56,0
+C00218,Female,0,One year,2,87.95,175.9,0
+C00219,Male,0,Month-to-month,67,103.78,6953.26,1
+C00220,Female,0,One year,20,96.39,1927.8,1
+C00221,Female,0,Month-to-month,22,82.03,1804.66,0
+C00222,Male,0,Month-to-month,49,72.91,3572.59,1
+C00223,Female,0,Month-to-month,19,21.17,402.23,1
+C00224,Male,0,Month-to-month,27,91.74,2476.98,0
+C00225,Female,0,Month-to-month,51,73.59,3753.09,0
+C00226,Male,0,Two year,43,45.62,1961.66,0
+C00227,Male,0,Month-to-month,47,51.44,2417.68,0
+C00228,Male,1,Month-to-month,1,113.43,113.43,1
+C00229,Female,0,One year,33,81.68,2695.44,1
+C00230,Female,0,Month-to-month,34,66.54,2262.36,1
+C00231,Male,0,Month-to-month,45,81.33,3659.85,0
+C00232,Female,0,Month-to-month,11,60.2,662.2,0
+C00233,Male,0,Month-to-month,12,65.96,791.52,0
+C00234,Female,0,Month-to-month,55,47.61,2618.55,0
+C00235,Male,0,One year,48,62.87,3017.76,1
+C00236,Male,0,Two year,58,87.93,5099.94,0
+C00237,Female,1,Month-to-month,20,22.07,441.4,1
+C00238,Female,0,One year,71,99.09,7035.39,0
+C00239,Male,0,One year,20,46.86,937.2,1
+C00240,Female,0,Month-to-month,47,87.62,4118.14,1
+C00241,Male,0,One year,12,83.56,1002.72,0
+C00242,Female,0,One year,66,84.57,5581.62,0
+C00243,Male,0,Two year,24,80.03,1920.72,0
+C00244,Male,0,Two year,57,115.83,6602.31,1
+C00245,Female,1,Month-to-month,24,69.85,1676.4,0
+C00246,Male,0,Month-to-month,57,92.7,5283.9,1
+C00247,Female,0,Month-to-month,33,89.96,2968.68,1
+C00248,Male,0,Month-to-month,5,42.1,210.5,1
+C00249,Female,1,Month-to-month,14,46.9,656.6,1
+C00250,Female,0,Two year,49,61.25,3001.25,0
+C00251,Female,0,Month-to-month,14,46.33,648.62,1
+C00252,Female,1,Month-to-month,20,55.41,1108.2,1
+C00253,Female,1,Two year,39,57.88,2257.32,0
+C00254,Male,0,Month-to-month,18,79.59,1432.62,1
+C00255,Female,0,Month-to-month,10,40.43,404.3,0
+C00256,Male,0,Two year,45,100.04,4501.8,0
+C00257,Female,1,Month-to-month,49,62.63,3068.87,1
+C00258,Female,0,Month-to-month,53,90.04,4772.12,0
+C00259,Male,0,Month-to-month,68,26.31,1789.08,0
+C00260,Male,0,Two year,9,65.94,593.46,0
+C00261,Female,0,Month-to-month,31,20.88,647.28,1
+C00262,Female,0,Month-to-month,17,86.94,1477.98,0
+C00263,Male,0,Month-to-month,64,53.06,3395.84,0
+C00264,Male,0,Month-to-month,39,114.82,4477.98,1
+C00265,Male,1,Two year,7,51.06,357.42,0
+C00266,Female,1,Month-to-month,50,75.51,3775.5,1
+C00267,Female,0,Two year,4,44.25,177.0,0
+C00268,Male,0,Month-to-month,20,81.25,1625.0,1
+C00269,Male,0,Month-to-month,52,65.64,3413.28,0
+C00270,Female,0,Two year,36,55.8,2008.8,0
+C00271,Female,0,Month-to-month,55,38.78,2132.9,0
+C00272,Female,1,Month-to-month,41,29.38,1204.58,1
+C00273,Male,0,Two year,60,30.23,1813.8,0
+C00274,Female,0,Month-to-month,40,119.9,4796.0,0
+C00275,Female,1,Month-to-month,5,60.06,300.3,0
+C00276,Female,0,Two year,6,18.2,109.2,0
+C00277,Male,0,Month-to-month,56,115.2,6451.2,0
+C00278,Female,0,Month-to-month,3,20.04,60.12,1
+C00279,Female,0,Month-to-month,27,60.7,1638.9,1
+C00280,Female,0,Month-to-month,2,91.18,182.36,1
+C00281,Female,0,Month-to-month,22,111.29,2448.38,1
+C00282,Male,1,One year,43,90.71,3900.53,0
+C00283,Female,0,Month-to-month,13,65.29,848.77,1
+C00284,Female,0,One year,34,117.39,3991.26,0
+C00285,Male,0,Month-to-month,71,22.01,1562.71,0
+C00286,Female,0,Month-to-month,6,118.66,711.96,1
+C00287,Male,0,Month-to-month,5,104.64,523.2,1
+C00288,Male,0,One year,20,112.75,2255.0,1
+C00289,Female,0,Month-to-month,59,43.99,2595.41,0
+C00290,Male,0,Month-to-month,29,32.53,943.37,0
+C00291,Female,1,Two year,46,85.66,3940.36,0
+C00292,Male,0,One year,3,70.62,211.86,0
+C00293,Female,0,Month-to-month,53,71.36,3782.08,0
+C00294,Male,0,Two year,5,112.31,561.55,0
+C00295,Male,1,Month-to-month,51,81.25,4143.75,0
+C00296,Male,0,Month-to-month,11,49.73,547.03,1
+C00297,Female,0,Month-to-month,61,58.81,3587.41,0
+C00298,Female,0,Month-to-month,22,31.62,695.64,1
+C00299,Female,0,Month-to-month,14,37.62,526.68,1
+C00300,Female,0,One year,24,32.62,782.88,0
+C00301,Male,0,Month-to-month,1,100.65,100.65,1
+C00302,Female,0,Two year,12,89.9,1078.8,0
+C00303,Male,0,Two year,43,72.1,3100.3,0
+C00304,Male,1,One year,22,56.19,1236.18,0
+C00305,Female,0,One year,26,86.19,2240.94,0
+C00306,Female,0,One year,58,100.92,5853.36,0
+C00307,Male,0,Two year,9,107.89,971.01,1
+C00308,Female,0,Month-to-month,29,73.8,2140.2,0
+C00309,Female,0,Month-to-month,14,101.63,1422.82,0
+C00310,Male,0,Month-to-month,35,70.15,2455.25,0
+C00311,Male,1,Month-to-month,24,66.4,1593.6,1
+C00312,Female,1,Month-to-month,4,106.27,425.08,1
+C00313,Female,1,One year,5,57.41,287.05,1
+C00314,Female,1,Month-to-month,61,58.38,3561.18,0
+C00315,Male,1,Two year,5,49.1,245.5,1
+C00316,Male,0,Month-to-month,56,70.91,3970.96,1
+C00317,Male,0,Month-to-month,66,73.57,4855.62,0
+C00318,Male,0,Month-to-month,34,85.37,2902.58,0
+C00319,Male,0,Month-to-month,23,61.91,1423.93,0
+C00320,Female,0,Month-to-month,56,40.22,2252.32,0
+C00321,Female,1,Month-to-month,70,106.42,7449.4,1
+C00322,Male,0,Month-to-month,9,53.29,479.61,1
+C00323,Male,0,Month-to-month,69,112.14,7737.66,0
+C00324,Male,0,Month-to-month,68,39.15,2662.2,0
+C00325,Female,0,Month-to-month,11,75.13,826.43,1
+C00326,Female,0,Month-to-month,4,72.73,290.92,1
+C00327,Female,1,Month-to-month,51,102.52,5228.52,0
+C00328,Female,0,Month-to-month,6,32.16,192.96,0
+C00329,Male,0,Month-to-month,43,110.81,4764.83,0
+C00330,Male,0,Month-to-month,5,72.21,361.05,0
+C00331,Female,0,One year,50,77.78,3889.0,0
+C00332,Female,0,Two year,17,70.04,1190.68,0
+C00333,Male,0,Two year,7,21.67,151.69,0
+C00334,Female,0,Month-to-month,5,68.7,343.5,1
+C00335,Male,0,Month-to-month,14,44.88,628.32,0
+C00336,Male,1,Month-to-month,39,52.95,2065.05,0
+C00337,Female,0,One year,6,84.21,505.26,1
+C00338,Female,1,One year,57,68.77,3919.89,0
+C00339,Male,0,Two year,43,27.51,1182.93,0
+C00340,Male,0,Two year,22,25.45,559.9,0
+C00341,Female,1,Month-to-month,71,36.94,2622.74,0
+C00342,Male,0,One year,47,37.47,1761.09,0
+C00343,Male,0,Two year,48,80.05,3842.4,0
+C00344,Male,0,Month-to-month,13,36.14,469.82,1
+C00345,Female,0,Two year,51,107.94,5504.94,0
+C00346,Male,0,Month-to-month,40,39.4,1576.0,0
+C00347,Male,1,Two year,70,27.3,1911.0,0
+C00348,Female,1,One year,34,107.33,3649.22,0
+C00349,Female,0,Month-to-month,49,48.12,2357.88,1
+C00350,Male,0,One year,25,61.39,1534.75,0
+C00351,Female,0,Month-to-month,3,115.82,347.46,1
+C00352,Female,0,One year,10,114.33,1143.3,1
+C00353,Female,0,One year,62,90.92,5637.04,0
+C00354,Male,1,One year,53,25.03,1326.59,0
+C00355,Male,1,Two year,26,78.52,2041.52,0
+C00356,Female,0,Month-to-month,50,118.89,5944.5,1
+C00357,Male,0,Month-to-month,1,114.59,114.59,1
+C00358,Female,0,Month-to-month,3,28.81,86.43,0
+C00359,Male,0,Month-to-month,37,58.39,2160.43,0
+C00360,Male,0,Month-to-month,45,50.18,2258.1,0
+C00361,Male,0,Month-to-month,67,31.23,2092.41,0
+C00362,Female,0,Month-to-month,54,88.87,4798.98,0
+C00363,Male,0,Month-to-month,19,45.93,872.67,0
+C00364,Female,1,Two year,58,53.18,3084.44,0
+C00365,Male,0,Month-to-month,35,27.22,952.7,1
+C00366,Female,1,Two year,59,68.79,4058.61,0
+C00367,Female,0,Month-to-month,13,34.13,443.69,1
+C00368,Female,0,Month-to-month,2,62.07,124.14,1
+C00369,Male,0,Month-to-month,5,32.62,163.1,0
+C00370,Female,0,Month-to-month,71,115.29,8185.59,1
+C00371,Male,0,Month-to-month,6,32.79,196.74,1
+C00372,Female,0,Month-to-month,67,71.23,4772.41,0
+C00373,Female,1,Month-to-month,52,38.09,1980.68,0
+C00374,Male,0,Month-to-month,11,25.79,283.69,0
+C00375,Female,0,One year,62,38.64,2395.68,0
+C00376,Male,0,Month-to-month,11,23.59,259.49,0
+C00377,Male,0,Two year,11,32.22,354.42,0
+C00378,Female,0,Month-to-month,41,68.34,2801.94,1
+C00379,Female,0,Two year,21,84.49,1774.29,1
+C00380,Female,1,One year,21,26.91,565.11,1
+C00381,Male,0,Two year,14,62.98,881.72,0
+C00382,Male,0,Two year,44,77.29,3400.76,0
+C00383,Female,0,Month-to-month,2,41.89,83.78,0
+C00384,Female,0,Month-to-month,18,55.95,1007.1,0
+C00385,Female,1,Month-to-month,40,25.33,1013.2,1
+C00386,Female,0,Two year,35,40.45,1415.75,0
+C00387,Male,0,One year,50,65.61,3280.5,1
+C00388,Male,0,Month-to-month,16,119.03,1904.48,1
+C00389,Female,0,Two year,46,119.62,5502.52,0
+C00390,Male,0,Month-to-month,54,117.92,6367.68,1
+C00391,Female,0,One year,28,61.15,1712.2,0
+C00392,Female,0,One year,19,26.23,498.37,0
+C00393,Male,0,Month-to-month,40,51.0,2040.0,1
+C00394,Male,1,One year,42,42.25,1774.5,0
+C00395,Male,0,Two year,7,19.44,136.08,0
+C00396,Female,0,Month-to-month,41,27.71,1136.11,0
+C00397,Female,0,Month-to-month,11,64.23,706.53,0
+C00398,Female,1,Month-to-month,41,52.65,2158.65,0
+C00399,Female,0,One year,67,36.4,2438.8,0
+C00400,Male,0,Month-to-month,39,91.04,3550.56,0
+C00401,Male,0,Two year,55,54.43,2993.65,0
+C00402,Female,0,Two year,22,104.89,2307.58,1
+C00403,Male,0,Month-to-month,66,42.58,2810.28,1
+C00404,Female,0,Month-to-month,58,72.92,4229.36,1
+C00405,Male,0,One year,66,36.78,2427.48,0
+C00406,Female,1,One year,53,68.52,3631.56,0
+C00407,Female,0,Month-to-month,47,33.55,1576.85,1
+C00408,Male,0,Month-to-month,38,34.48,1310.24,0
+C00409,Female,0,Month-to-month,66,80.45,5309.7,0
+C00410,Female,0,Two year,61,44.91,2739.51,0
+C00411,Female,0,Month-to-month,30,35.58,1067.4,0
+C00412,Female,0,Two year,7,112.84,789.88,0
+C00413,Female,1,Month-to-month,1,22.39,22.39,1
+C00414,Female,0,Two year,17,75.65,1286.05,0
+C00415,Male,0,Month-to-month,5,73.92,369.6,1
+C00416,Male,0,Month-to-month,16,43.56,696.96,0
+C00417,Female,1,Two year,8,64.18,513.44,0
+C00418,Female,0,Two year,70,26.95,1886.5,0
+C00419,Male,0,Month-to-month,7,91.57,640.99,0
+C00420,Male,1,Month-to-month,45,40.61,1827.45,0
+C00421,Male,0,Month-to-month,25,37.73,943.25,0
+C00422,Male,1,Month-to-month,13,50.12,651.56,1
+C00423,Male,0,Month-to-month,50,110.04,5502.0,1
+C00424,Female,0,Two year,69,99.24,6847.56,0
+C00425,Female,0,Month-to-month,57,114.58,6531.06,0
+C00426,Male,1,One year,70,84.5,5915.0,0
+C00427,Male,0,Month-to-month,42,85.62,3596.04,0
+C00428,Female,0,Month-to-month,48,66.96,3214.08,1
+C00429,Male,0,One year,11,110.33,1213.63,1
+C00430,Female,0,Month-to-month,61,70.11,4276.71,0
+C00431,Male,0,One year,54,54.22,2927.88,0
+C00432,Male,0,Month-to-month,19,83.32,1583.08,1
+C00433,Female,1,Two year,26,73.71,1916.46,0
+C00434,Female,0,One year,44,30.65,1348.6,0
+C00435,Female,0,Two year,1,58.06,58.06,0
+C00436,Male,0,Month-to-month,59,49.96,2947.64,0
+C00437,Male,0,Month-to-month,20,104.38,2087.6,1
+C00438,Female,0,Month-to-month,6,56.64,339.84,1
+C00439,Female,0,Month-to-month,24,101.8,2443.2,0
+C00440,Male,0,Month-to-month,60,63.12,3787.2,0
+C00441,Female,0,Month-to-month,20,94.86,1897.2,1
+C00442,Female,0,Month-to-month,39,31.8,1240.2,0
+C00443,Female,0,Month-to-month,58,112.31,6513.98,0
+C00444,Male,0,Month-to-month,3,67.02,201.06,1
+C00445,Male,0,Month-to-month,54,44.5,2403.0,0
+C00446,Female,0,Month-to-month,21,42.63,895.23,0
+C00447,Male,0,One year,50,45.04,2252.0,0
+C00448,Male,1,Month-to-month,14,55.41,775.74,1
+C00449,Female,0,Month-to-month,10,91.19,911.9,1
+C00450,Male,0,Month-to-month,56,114.86,6432.16,0
+C00451,Male,0,One year,58,86.24,5001.92,0
+C00452,Female,0,Month-to-month,70,73.81,5166.7,1
+C00453,Female,0,One year,49,63.76,3124.24,1
+C00454,Male,0,Two year,34,102.48,3484.32,0
+C00455,Male,0,Month-to-month,14,104.67,1465.38,1
+C00456,Female,1,Two year,21,47.89,1005.69,0
+C00457,Male,0,One year,47,115.25,5416.75,1
+C00458,Male,0,Month-to-month,25,58.3,1457.5,0
+C00459,Female,0,Month-to-month,35,99.61,3486.35,0
+C00460,Male,1,One year,12,116.62,1399.44,0
+C00461,Female,0,Two year,32,89.77,2872.64,0
+C00462,Male,0,Month-to-month,17,34.48,586.16,0
+C00463,Female,0,Month-to-month,8,77.79,622.32,0
+C00464,Female,0,One year,10,30.12,301.2,1
+C00465,Male,1,Month-to-month,37,98.49,3644.13,0
+C00466,Female,0,One year,27,46.69,1260.63,1
+C00467,Male,0,Month-to-month,8,88.91,711.28,0
+C00468,Female,0,One year,37,110.83,4100.71,1
+C00469,Male,0,Two year,12,36.46,437.52,0
+C00470,Male,1,One year,2,58.07,116.14,0
+C00471,Male,0,One year,10,84.01,840.1,1
+C00472,Female,0,One year,32,60.81,1945.92,0
+C00473,Female,1,Two year,68,35.83,2436.44,1
+C00474,Male,1,Two year,18,20.97,377.46,0
+C00475,Male,0,Month-to-month,21,59.47,1248.87,1
+C00476,Male,0,One year,18,84.22,1515.96,0
+C00477,Female,0,Month-to-month,26,76.55,1990.3,0
+C00478,Male,0,Two year,51,33.94,1730.94,0
+C00479,Female,0,One year,23,63.97,1471.31,0
+C00480,Female,0,Month-to-month,47,55.69,2617.43,0
+C00481,Male,1,Month-to-month,64,45.97,2942.08,0
+C00482,Female,1,Month-to-month,68,92.39,6282.52,0
+C00483,Male,1,One year,40,49.58,1983.2,1
+C00484,Female,1,Month-to-month,51,73.09,3727.59,0
+C00485,Female,0,Month-to-month,66,112.17,7403.22,1
+C00486,Female,0,Two year,56,73.01,4088.56,0
+C00487,Male,0,One year,22,80.94,1780.68,1
+C00488,Male,0,Month-to-month,10,25.47,254.7,0
+C00489,Male,0,Month-to-month,9,36.17,325.53,1
+C00490,Male,0,Two year,63,28.3,1782.9,0
+C00491,Male,0,One year,40,96.01,3840.4,0
+C00492,Male,0,One year,22,103.26,2271.72,1
+C00493,Male,0,Month-to-month,25,37.02,925.5,0
+C00494,Female,0,Month-to-month,20,40.37,807.4,1
+C00495,Female,0,Month-to-month,57,50.97,2905.29,0
+C00496,Female,0,One year,44,78.29,3444.76,0
+C00497,Female,0,Month-to-month,63,81.42,5129.46,0
+C00498,Male,1,Month-to-month,22,88.05,1937.1,0
+C00499,Female,0,One year,34,110.33,3751.22,0
+C00500,Female,0,Two year,9,48.09,432.81,1
+C00501,Male,0,One year,69,85.19,5878.11,1
+C00502,Male,0,Month-to-month,37,75.09,2778.33,0
+C00503,Male,0,Month-to-month,40,49.2,1968.0,0
+C00504,Female,0,Month-to-month,30,110.56,3316.8,1
+C00505,Female,0,Month-to-month,20,27.74,554.8,1
+C00506,Male,0,Month-to-month,68,90.62,6162.16,0
+C00507,Female,0,Month-to-month,35,92.24,3228.4,1
+C00508,Female,1,One year,48,111.36,5345.28,1
+C00509,Female,0,Two year,3,70.9,212.7,0
+C00510,Male,0,Two year,20,50.81,1016.2,0
+C00511,Male,0,Month-to-month,58,102.43,5940.94,1
+C00512,Male,0,Month-to-month,7,96.62,676.34,1
+C00513,Male,1,Month-to-month,8,69.03,552.24,1
+C00514,Male,1,Month-to-month,58,96.32,5586.56,1
+C00515,Female,0,Month-to-month,22,45.32,997.04,0
+C00516,Male,0,Month-to-month,20,78.13,1562.6,1
+C00517,Female,0,One year,41,106.25,4356.25,0
+C00518,Female,0,Month-to-month,14,50.43,706.02,0
+C00519,Male,1,Two year,4,67.32,269.28,1
+C00520,Female,0,Month-to-month,1,115.01,115.01,0
+C00521,Female,0,Month-to-month,6,99.42,596.52,1
+C00522,Female,0,Month-to-month,12,108.48,1301.76,1
+C00523,Male,0,Month-to-month,50,57.3,2865.0,0
+C00524,Female,0,Month-to-month,22,119.64,2632.08,1
+C00525,Female,0,Two year,6,33.56,201.36,0
+C00526,Male,0,Month-to-month,2,70.91,141.82,0
+C00527,Female,0,Month-to-month,34,66.89,2274.26,1
+C00528,Male,0,One year,60,99.44,5966.4,0
+C00529,Male,1,Month-to-month,25,110.68,2767.0,1
+C00530,Male,1,One year,5,92.58,462.9,0
+C00531,Female,0,Month-to-month,17,81.94,1392.98,1
+C00532,Female,0,Two year,36,61.6,2217.6,0
+C00533,Female,0,Month-to-month,14,70.05,980.7,1
+C00534,Male,1,Month-to-month,70,69.95,4896.5,0
+C00535,Female,0,One year,55,20.08,1104.4,0
+C00536,Female,0,Two year,25,69.31,1732.75,0
+C00537,Female,0,Month-to-month,68,105.31,7161.08,1
+C00538,Male,0,One year,24,90.35,2168.4,1
+C00539,Female,0,Month-to-month,10,99.16,991.6,1
+C00540,Male,0,Month-to-month,67,57.83,3874.61,1
+C00541,Female,0,Month-to-month,69,71.96,4965.24,0
+C00542,Female,0,One year,23,21.42,492.66,0
+C00543,Female,0,Month-to-month,43,57.07,2454.01,0
+C00544,Male,0,One year,13,66.39,863.07,0
+C00545,Female,0,Month-to-month,46,44.03,2025.38,0
+C00546,Female,0,Two year,49,21.19,1038.31,0
+C00547,Male,0,Two year,51,88.42,4509.42,0
+C00548,Male,0,Month-to-month,41,62.38,2557.58,0
+C00549,Male,1,Month-to-month,50,60.4,3020.0,0
+C00550,Male,0,Month-to-month,40,43.5,1740.0,0
+C00551,Female,1,Two year,59,72.86,4298.74,0
+C00552,Male,0,Month-to-month,13,62.68,814.84,1
+C00553,Female,0,Month-to-month,35,66.35,2322.25,0
+C00554,Male,0,Month-to-month,30,77.25,2317.5,0
+C00555,Male,0,One year,38,18.65,708.7,0
+C00556,Male,0,Month-to-month,11,110.58,1216.38,0
+C00557,Male,0,Month-to-month,23,25.25,580.75,0
+C00558,Male,0,Two year,68,63.99,4351.32,0
+C00559,Male,0,Month-to-month,8,39.15,313.2,0
+C00560,Male,0,Two year,46,71.43,3285.78,0
+C00561,Female,0,Month-to-month,48,46.58,2235.84,1
+C00562,Female,0,Month-to-month,34,105.72,3594.48,1
+C00563,Female,0,Two year,3,58.43,175.29,0
+C00564,Male,0,One year,3,83.15,249.45,1
+C00565,Female,1,One year,20,43.39,867.8,0
+C00566,Female,0,Month-to-month,8,19.98,159.84,0
+C00567,Female,0,Month-to-month,7,59.22,414.54,1
+C00568,Male,0,Month-to-month,12,72.72,872.64,1
+C00569,Male,0,Month-to-month,14,64.87,908.18,1
+C00570,Male,0,Month-to-month,60,116.13,6967.8,1
+C00571,Female,0,Month-to-month,46,90.1,4144.6,0
+C00572,Female,0,Month-to-month,3,119.56,358.68,0
+C00573,Female,0,Month-to-month,45,48.1,2164.5,0
+C00574,Female,0,Month-to-month,10,98.48,984.8,1
+C00575,Female,0,Month-to-month,30,74.67,2240.1,1
+C00576,Male,0,Two year,3,80.4,241.2,1
+C00577,Male,0,One year,7,118.56,829.92,1
+C00578,Male,0,Month-to-month,10,84.71,847.1,1
+C00579,Female,0,One year,31,109.68,3400.08,1
+C00580,Female,0,Two year,33,92.03,3036.99,0
+C00581,Male,0,Month-to-month,26,30.99,805.74,1
+C00582,Female,0,Month-to-month,45,89.34,4020.3,0
+C00583,Female,0,Month-to-month,52,67.4,3504.8,1
+C00584,Female,0,Month-to-month,52,111.72,5809.44,0
+C00585,Male,0,One year,42,100.3,4212.6,0
+C00586,Male,0,Two year,39,28.62,1116.18,0
+C00587,Female,1,Month-to-month,35,31.66,1108.1,1
+C00588,Male,0,One year,17,25.1,426.7,0
+C00589,Male,0,Month-to-month,35,68.31,2390.85,1
+C00590,Male,0,One year,1,26.24,26.24,0
+C00591,Male,0,One year,69,91.82,6335.58,1
+C00592,Female,1,Month-to-month,27,74.34,2007.18,0
+C00593,Male,1,Month-to-month,54,103.26,5576.04,1
+C00594,Female,1,One year,68,46.54,3164.72,0
+C00595,Male,0,Two year,36,70.95,2554.2,0
+C00596,Male,0,Month-to-month,62,29.98,1858.76,0
+C00597,Male,0,Month-to-month,35,108.23,3788.05,1
+C00598,Male,0,Month-to-month,10,35.85,358.5,0
+C00599,Male,0,One year,2,28.44,56.88,1
+C00600,Male,0,One year,10,38.92,389.2,1
+C00601,Male,0,One year,67,100.24,6716.08,0
+C00602,Male,0,One year,34,28.79,978.86,1
+C00603,Female,0,Two year,23,80.67,1855.41,0
+C00604,Male,0,Two year,32,94.11,3011.52,0
+C00605,Male,0,Month-to-month,19,94.61,1797.59,1
+C00606,Female,0,One year,62,37.39,2318.18,0
+C00607,Male,0,Month-to-month,71,24.29,1724.59,0
+C00608,Male,0,Month-to-month,7,63.78,446.46,1
+C00609,Male,0,Two year,52,38.65,2009.8,0
+C00610,Male,0,One year,24,89.33,2143.92,0
+C00611,Female,0,Two year,4,54.38,217.52,0
+C00612,Male,0,Month-to-month,66,63.83,4212.78,0
+C00613,Female,0,Month-to-month,5,29.58,147.9,1
+C00614,Male,0,Month-to-month,15,75.89,1138.35,1
+C00615,Male,0,Month-to-month,2,36.92,73.84,0
+C00616,Female,0,Month-to-month,34,87.26,2966.84,0
+C00617,Female,0,Month-to-month,43,25.26,1086.18,0
+C00618,Female,0,Month-to-month,23,117.54,2703.42,1
+C00619,Female,0,Two year,6,87.82,526.92,0
+C00620,Female,0,Month-to-month,9,36.54,328.86,1
+C00621,Female,0,Month-to-month,67,19.44,1302.48,0
+C00622,Female,1,One year,58,52.12,3022.96,0
+C00623,Female,0,Month-to-month,67,33.59,2250.53,1
+C00624,Male,0,Two year,38,40.28,1530.64,0
+C00625,Female,1,One year,39,107.02,4173.78,1
+C00626,Female,0,Month-to-month,56,79.53,4453.68,0
+C00627,Female,0,One year,44,36.0,1584.0,0
+C00628,Male,1,One year,31,74.78,2318.18,0
+C00629,Female,0,One year,21,44.09,925.89,0
+C00630,Male,0,Two year,35,117.57,4114.95,0
+C00631,Female,0,One year,5,21.34,106.7,0
+C00632,Female,0,One year,14,92.7,1297.8,0
+C00633,Female,0,Month-to-month,53,96.85,5133.05,1
+C00634,Female,0,One year,62,24.85,1540.7,0
+C00635,Male,0,Two year,8,35.53,284.24,0
+C00636,Female,0,One year,7,57.2,400.4,0
+C00637,Female,0,One year,7,106.55,745.85,1
+C00638,Male,0,Month-to-month,57,72.77,4147.89,1
+C00639,Male,0,One year,23,84.84,1951.32,0
+C00640,Male,1,Two year,24,97.87,2348.88,1
+C00641,Male,0,Month-to-month,1,102.47,102.47,0
+C00642,Male,0,Month-to-month,70,66.58,4660.6,0
+C00643,Female,0,Month-to-month,31,69.9,2166.9,0
+C00644,Male,0,Month-to-month,57,91.24,5200.68,0
+C00645,Female,0,One year,51,44.86,2287.86,0
+C00646,Female,0,Month-to-month,11,105.16,1156.76,1
+C00647,Male,0,Month-to-month,57,20.12,1146.84,0
+C00648,Male,1,One year,40,37.97,1518.8,0
+C00649,Male,1,One year,43,99.62,4283.66,1
+C00650,Female,0,One year,15,52.71,790.65,0
+C00651,Male,0,One year,61,33.28,2030.08,0
+C00652,Female,0,One year,67,37.05,2482.35,0
+C00653,Male,0,One year,29,72.14,2092.06,1
+C00654,Male,0,One year,7,104.31,730.17,1
+C00655,Male,1,Month-to-month,61,25.21,1537.81,0
+C00656,Male,0,One year,64,21.11,1351.04,1
+C00657,Male,0,Month-to-month,36,65.45,2356.2,1
+C00658,Female,0,Month-to-month,42,115.53,4852.26,0
+C00659,Female,1,Month-to-month,16,46.46,743.36,0
+C00660,Female,0,Two year,5,115.84,579.2,0
+C00661,Male,0,One year,68,108.54,7380.72,0
+C00662,Female,0,Month-to-month,35,46.88,1640.8,1
+C00663,Female,1,One year,20,101.33,2026.6,1
+C00664,Male,0,Month-to-month,50,87.96,4398.0,0
+C00665,Male,0,One year,2,70.21,140.42,0
+C00666,Male,0,Two year,6,61.14,366.84,0
+C00667,Male,1,One year,18,101.18,1821.24,1
+C00668,Male,0,One year,32,98.89,3164.48,0
+C00669,Female,0,Month-to-month,27,95.21,2570.67,1
+C00670,Male,1,Month-to-month,14,119.82,1677.48,1
+C00671,Male,0,Two year,25,66.81,1670.25,0
+C00672,Male,0,One year,24,100.31,2407.44,0
+C00673,Female,0,Month-to-month,38,105.97,4026.86,1
+C00674,Male,0,Month-to-month,40,39.58,1583.2,0
+C00675,Male,0,Month-to-month,63,22.29,1404.27,0
+C00676,Male,0,Month-to-month,58,59.28,3438.24,0
+C00677,Female,0,Month-to-month,21,105.39,2213.19,1
+C00678,Male,1,Month-to-month,65,47.49,3086.85,0
+C00679,Male,0,Two year,37,89.4,3307.8,0
+C00680,Male,0,Month-to-month,14,18.75,262.5,0
+C00681,Female,0,Month-to-month,25,54.25,1356.25,1
+C00682,Male,0,Month-to-month,53,80.78,4281.34,0
+C00683,Male,0,Month-to-month,59,31.24,1843.16,0
+C00684,Female,1,Two year,27,109.45,2955.15,1
+C00685,Male,1,Month-to-month,12,33.94,407.28,1
+C00686,Female,0,One year,14,110.8,1551.2,0
+C00687,Male,0,Two year,8,40.07,320.56,1
+C00688,Female,0,Month-to-month,50,119.42,5971.0,1
+C00689,Male,0,One year,36,79.68,2868.48,0
+C00690,Male,0,Two year,33,26.6,877.8,0
+C00691,Male,0,Month-to-month,48,24.66,1183.68,0
+C00692,Male,0,Month-to-month,59,25.64,1512.76,0
+C00693,Male,0,Two year,57,78.17,4455.69,0
+C00694,Female,0,Two year,10,100.58,1005.8,0
+C00695,Female,0,Month-to-month,42,59.1,2482.2,0
+C00696,Male,0,One year,63,63.37,3992.31,0
+C00697,Male,0,Month-to-month,55,78.11,4296.05,1
+C00698,Female,0,Two year,24,72.37,1736.88,0
+C00699,Female,0,Month-to-month,28,88.18,2469.04,1
+C00700,Male,0,Month-to-month,64,66.12,4231.68,0
+C00701,Male,0,One year,3,90.81,272.43,1
+C00702,Female,0,Two year,38,119.73,4549.74,0
+C00703,Female,0,Two year,9,53.73,483.57,0
+C00704,Female,0,Month-to-month,64,19.25,1232.0,1
+C00705,Male,1,Month-to-month,3,30.81,92.43,1
+C00706,Female,0,Two year,2,74.46,148.92,0
+C00707,Male,0,Two year,24,53.11,1274.64,0
+C00708,Female,0,Month-to-month,15,113.88,1708.2,1
+C00709,Female,1,One year,36,82.0,2952.0,0
+C00710,Male,0,Month-to-month,22,71.08,1563.76,0
+C00711,Male,1,Month-to-month,26,99.4,2584.4,0
+C00712,Male,0,Month-to-month,41,44.38,1819.58,1
+C00713,Male,0,Month-to-month,40,101.61,4064.4,0
+C00714,Male,0,Month-to-month,67,18.31,1226.77,1
+C00715,Male,0,Two year,35,81.21,2842.35,0
+C00716,Male,0,Month-to-month,41,113.35,4647.35,0
+C00717,Female,0,Month-to-month,49,98.36,4819.64,1
+C00718,Female,0,Month-to-month,13,105.07,1365.91,1
+C00719,Male,1,Month-to-month,48,58.49,2807.52,1
+C00720,Female,0,Month-to-month,62,102.07,6328.34,1
+C00721,Male,0,One year,23,74.18,1706.14,1
+C00722,Male,0,Month-to-month,13,81.09,1054.17,1
+C00723,Female,0,One year,25,24.01,600.25,1
+C00724,Male,0,Two year,20,38.56,771.2,0
+C00725,Female,1,Month-to-month,42,74.2,3116.4,1
+C00726,Male,0,Two year,62,24.0,1488.0,0
+C00727,Female,0,Two year,43,93.63,4026.09,0
+C00728,Female,0,Two year,9,103.69,933.21,1
+C00729,Male,0,One year,23,111.88,2573.24,1
+C00730,Male,0,One year,49,28.38,1390.62,0
+C00731,Female,0,One year,24,113.85,2732.4,0
+C00732,Male,0,One year,42,24.9,1045.8,0
+C00733,Male,1,Month-to-month,50,66.35,3317.5,1
+C00734,Female,1,Two year,24,103.71,2489.04,0
+C00735,Male,1,One year,46,25.17,1157.82,0
+C00736,Male,0,One year,29,19.86,575.94,0
+C00737,Female,0,Month-to-month,10,20.54,205.4,1
+C00738,Male,1,Month-to-month,27,70.15,1894.05,1
+C00739,Male,0,Month-to-month,32,100.78,3224.96,0
+C00740,Male,0,Month-to-month,1,31.0,31.0,0
+C00741,Male,0,Month-to-month,64,30.71,1965.44,0
+C00742,Male,0,Month-to-month,38,75.99,2887.62,1
+C00743,Female,0,Month-to-month,3,41.9,125.7,0
+C00744,Male,1,Month-to-month,62,92.48,5733.76,0
+C00745,Female,0,Month-to-month,61,114.86,7006.46,0
+C00746,Male,0,Two year,1,96.14,96.14,0
+C00747,Female,0,Month-to-month,12,107.47,1289.64,1
+C00748,Female,0,Month-to-month,26,71.0,1846.0,1
+C00749,Female,0,Month-to-month,37,102.9,3807.3,1
+C00750,Male,0,Month-to-month,52,36.66,1906.32,0
+C00751,Female,0,Month-to-month,31,24.97,774.07,0
+C00752,Female,0,One year,44,84.91,3736.04,0
+C00753,Male,0,Two year,1,23.3,23.3,0
+C00754,Male,1,Month-to-month,47,109.03,5124.41,1
+C00755,Female,0,One year,65,88.54,5755.1,0
+C00756,Male,0,Month-to-month,38,115.12,4374.56,1
+C00757,Female,0,Month-to-month,33,50.02,1650.66,0
+C00758,Female,0,Month-to-month,22,67.59,1486.98,1
+C00759,Male,0,Month-to-month,68,93.65,6368.2,0
+C00760,Female,0,One year,3,42.76,128.28,0
+C00761,Male,0,One year,21,73.27,1538.67,1
+C00762,Male,0,One year,10,85.27,852.7,0
+C00763,Male,0,Month-to-month,62,117.84,7306.08,0
+C00764,Female,0,One year,35,93.96,3288.6,0
+C00765,Male,0,Month-to-month,66,30.05,1983.3,0
+C00766,Male,0,Month-to-month,48,66.48,3191.04,0
+C00767,Female,0,Month-to-month,40,78.05,3122.0,0
+C00768,Female,0,One year,37,32.96,1219.52,0
+C00769,Female,0,Two year,15,62.06,930.9,0
+C00770,Male,0,Month-to-month,40,46.97,1878.8,0
+C00771,Male,1,One year,49,30.12,1475.88,0
+C00772,Female,0,One year,69,70.23,4845.87,0
+C00773,Male,0,Two year,39,34.89,1360.71,0
+C00774,Male,1,Month-to-month,67,78.23,5241.41,0
+C00775,Male,0,One year,68,35.31,2401.08,0
+C00776,Female,0,One year,38,91.81,3488.78,0
+C00777,Female,1,Two year,32,37.91,1213.12,0
+C00778,Female,0,Month-to-month,11,109.42,1203.62,1
+C00779,Male,0,Two year,20,20.67,413.4,0
+C00780,Male,0,Month-to-month,63,71.24,4488.12,0
+C00781,Male,0,Two year,10,50.65,506.5,0
+C00782,Female,0,Month-to-month,29,40.96,1187.84,0
+C00783,Female,1,Month-to-month,50,66.1,3305.0,0
+C00784,Female,1,Month-to-month,18,103.89,1870.02,1
+C00785,Male,0,Month-to-month,70,111.36,7795.2,0
+C00786,Female,0,Month-to-month,47,48.93,2299.71,0
+C00787,Male,0,Month-to-month,3,33.73,101.19,0
+C00788,Male,1,Month-to-month,18,91.45,1646.1,1
+C00789,Female,0,Month-to-month,53,77.36,4100.08,1
+C00790,Female,1,One year,62,38.5,2387.0,0
+C00791,Female,0,Two year,66,95.55,6306.3,0
+C00792,Male,0,One year,61,70.93,4326.73,0
+C00793,Male,0,Month-to-month,6,84.65,507.9,1
+C00794,Female,0,Month-to-month,52,54.65,2841.8,0
+C00795,Female,0,Two year,8,62.79,502.32,1
+C00796,Male,0,Month-to-month,6,36.39,218.34,1
+C00797,Female,1,Month-to-month,50,95.16,4758.0,0
+C00798,Female,0,Two year,34,34.02,1156.68,0
+C00799,Female,0,Two year,47,97.39,4577.33,0
+C00800,Female,0,Month-to-month,61,99.4,6063.4,0
+C00801,Female,0,One year,5,94.15,470.75,1
+C00802,Male,1,Month-to-month,38,19.98,759.24,0
+C00803,Male,0,One year,60,45.86,2751.6,0
+C00804,Male,0,Month-to-month,32,65.77,2104.64,1
+C00805,Male,0,Month-to-month,38,78.75,2992.5,0
+C00806,Male,1,One year,36,111.76,4023.36,0
+C00807,Female,0,Month-to-month,65,56.31,3660.15,0
+C00808,Female,1,One year,4,107.25,429.0,1
+C00809,Male,0,Month-to-month,63,34.67,2184.21,0
+C00810,Female,0,Two year,58,55.87,3240.46,0
+C00811,Male,1,Two year,58,23.33,1353.14,0
+C00812,Male,1,Month-to-month,30,93.73,2811.9,1
+C00813,Female,1,One year,37,33.37,1234.69,1
+C00814,Male,0,Month-to-month,27,44.22,1193.94,1
+C00815,Male,0,Month-to-month,18,97.07,1747.26,1
+C00816,Female,0,Month-to-month,63,72.54,4570.02,0
+C00817,Female,0,Two year,36,19.43,699.48,0
+C00818,Male,1,Two year,52,18.23,947.96,0
+C00819,Male,1,Two year,8,70.09,560.72,0
+C00820,Female,0,Two year,57,49.11,2799.27,0
+C00821,Male,0,Two year,47,36.39,1710.33,0
+C00822,Female,0,Month-to-month,71,80.59,5721.89,0
+C00823,Male,0,Two year,10,41.3,413.0,1
+C00824,Male,0,One year,39,78.41,3057.99,0
+C00825,Female,0,Month-to-month,37,56.69,2097.53,0
+C00826,Male,0,One year,39,37.05,1444.95,0
+C00827,Male,0,Month-to-month,4,32.09,128.36,0
+C00828,Male,0,Month-to-month,34,42.16,1433.44,0
+C00829,Female,0,Month-to-month,22,21.04,462.88,0
+C00830,Female,1,Month-to-month,44,49.43,2174.92,0
+C00831,Female,0,Month-to-month,17,110.0,1870.0,1
+C00832,Female,0,Two year,31,102.8,3186.8,1
+C00833,Female,0,One year,45,55.94,2517.3,0
+C00834,Male,0,Month-to-month,5,76.74,383.7,1
+C00835,Male,1,Month-to-month,56,75.87,4248.72,1
+C00836,Male,0,Month-to-month,51,102.53,5229.03,1
+C00837,Female,0,Month-to-month,5,42.1,210.5,1
+C00838,Female,1,Two year,5,48.23,241.15,1
+C00839,Male,1,Month-to-month,61,48.78,2975.58,0
+C00840,Female,0,One year,21,22.17,465.57,1
+C00841,Male,0,One year,62,50.1,3106.2,0
+C00842,Male,0,One year,36,107.55,3871.8,0
+C00843,Female,0,Two year,25,111.02,2775.5,0
+C00844,Female,0,Month-to-month,20,29.18,583.6,0
+C00845,Female,0,Two year,47,64.72,3041.84,1
+C00846,Female,1,One year,8,56.9,455.2,0
+C00847,Female,0,One year,29,67.91,1969.39,0
+C00848,Male,0,One year,25,74.58,1864.5,0
+C00849,Male,0,Two year,11,20.07,220.77,0
+C00850,Male,0,Two year,26,103.91,2701.66,0
+C00851,Male,0,Month-to-month,38,117.31,4457.78,1
+C00852,Male,1,Two year,49,84.65,4147.85,0
+C00853,Female,1,One year,7,85.37,597.59,0
+C00854,Female,0,Month-to-month,62,71.85,4454.7,1
+C00855,Male,0,Two year,63,52.1,3282.3,0
+C00856,Female,0,Month-to-month,50,33.2,1660.0,0
+C00857,Female,0,One year,66,77.57,5119.62,0
+C00858,Male,1,Month-to-month,31,22.58,699.98,1
+C00859,Male,0,Month-to-month,59,102.1,6023.9,0
+C00860,Male,0,Two year,52,60.93,3168.36,0
+C00861,Male,0,Month-to-month,40,60.3,2412.0,0
+C00862,Female,0,Month-to-month,13,51.37,667.81,0
+C00863,Male,0,Month-to-month,40,116.87,4674.8,0
+C00864,Male,0,Month-to-month,64,35.84,2293.76,0
+C00865,Male,0,Two year,70,33.43,2340.1,0
+C00866,Male,0,Two year,32,34.88,1116.16,0
+C00867,Male,0,Month-to-month,18,85.17,1533.06,0
+C00868,Female,0,One year,54,119.17,6435.18,0
+C00869,Female,0,Month-to-month,6,42.02,252.12,1
+C00870,Female,1,One year,11,110.37,1214.07,1
+C00871,Female,0,Month-to-month,40,46.42,1856.8,1
+C00872,Female,0,Month-to-month,71,84.09,5970.39,1
+C00873,Female,0,Month-to-month,24,22.13,531.12,1
+C00874,Male,0,One year,32,68.56,2193.92,0
+C00875,Male,0,Month-to-month,23,84.77,1949.71,1
+C00876,Male,0,Month-to-month,32,72.7,2326.4,0
+C00877,Male,1,Two year,1,42.26,42.26,0
+C00878,Male,0,One year,43,102.51,4407.93,1
+C00879,Male,0,Month-to-month,43,116.95,5028.85,1
+C00880,Female,0,Two year,23,64.84,1491.32,0
+C00881,Male,0,Two year,19,82.86,1574.34,0
+C00882,Female,0,Month-to-month,55,98.62,5424.1,0
+C00883,Female,0,One year,14,42.63,596.82,0
+C00884,Male,0,Month-to-month,4,106.17,424.68,1
+C00885,Male,0,One year,3,46.58,139.74,0
+C00886,Female,1,Month-to-month,63,97.13,6119.19,0
+C00887,Female,0,One year,26,29.43,765.18,0
+C00888,Female,1,Month-to-month,8,47.42,379.36,1
+C00889,Female,0,Month-to-month,63,72.43,4563.09,0
+C00890,Female,0,Two year,11,71.54,786.94,0
+C00891,Male,0,Month-to-month,24,104.74,2513.76,1
+C00892,Male,0,Two year,2,119.6,239.2,0
+C00893,Male,0,Two year,49,28.94,1418.06,0
+C00894,Male,0,Two year,50,45.68,2284.0,0
+C00895,Male,0,Month-to-month,54,54.48,2941.92,0
+C00896,Male,1,Two year,19,66.85,1270.15,0
+C00897,Female,0,Month-to-month,24,68.38,1641.12,1
+C00898,Female,0,Month-to-month,67,105.33,7057.11,0
+C00899,Male,0,Two year,59,96.6,5699.4,0
+C00900,Female,0,One year,3,19.92,59.76,1
+C00901,Female,1,Month-to-month,50,64.41,3220.5,0
+C00902,Female,0,Month-to-month,58,81.04,4700.32,0
+C00903,Male,0,Two year,40,64.96,2598.4,0
+C00904,Female,0,One year,46,31.33,1441.18,0
+C00905,Male,0,Month-to-month,1,58.54,58.54,0
+C00906,Female,0,Two year,3,59.99,179.97,0
+C00907,Female,0,Month-to-month,3,37.15,111.45,0
+C00908,Female,0,Month-to-month,12,95.14,1141.68,1
+C00909,Female,0,One year,71,50.78,3605.38,0
+C00910,Male,0,Two year,46,78.08,3591.68,0
+C00911,Female,0,Month-to-month,56,70.6,3953.6,0
+C00912,Female,0,Month-to-month,21,107.5,2257.5,1
+C00913,Male,0,Month-to-month,67,30.45,2040.15,0
+C00914,Male,1,Two year,15,29.65,444.75,0
+C00915,Female,0,Month-to-month,65,48.63,3160.95,0
+C00916,Male,0,Month-to-month,3,61.98,185.94,1
+C00917,Male,1,Two year,2,48.45,96.9,0
+C00918,Female,0,Month-to-month,6,95.85,575.1,1
+C00919,Male,0,One year,57,43.02,2452.14,0
+C00920,Male,0,Month-to-month,19,26.65,506.35,0
+C00921,Male,0,Two year,33,60.21,1986.93,0
+C00922,Female,1,Month-to-month,34,96.88,3293.92,1
+C00923,Female,0,Month-to-month,57,104.76,5971.32,0
+C00924,Female,0,Month-to-month,25,92.8,2320.0,0
+C00925,Male,0,One year,1,74.9,74.9,0
+C00926,Male,0,One year,28,91.87,2572.36,0
+C00927,Female,0,Month-to-month,21,87.5,1837.5,0
+C00928,Female,0,Month-to-month,52,41.91,2179.32,0
+C00929,Male,0,Two year,54,74.18,4005.72,0
+C00930,Male,0,Month-to-month,7,96.6,676.2,1
+C00931,Male,0,Month-to-month,57,50.35,2869.95,0
+C00932,Female,0,One year,6,84.71,508.26,0
+C00933,Male,0,Month-to-month,44,67.11,2952.84,0
+C00934,Female,0,Month-to-month,28,69.32,1940.96,1
+C00935,Male,0,Month-to-month,22,27.19,598.18,0
+C00936,Female,0,Month-to-month,35,85.95,3008.25,1
+C00937,Female,0,Month-to-month,23,106.3,2444.9,0
+C00938,Female,0,One year,57,32.43,1848.51,0
+C00939,Male,0,One year,69,55.34,3818.46,0
+C00940,Male,0,Month-to-month,58,22.96,1331.68,0
+C00941,Female,0,Two year,32,21.02,672.64,0
+C00942,Male,0,Month-to-month,36,118.95,4282.2,1
+C00943,Female,0,One year,32,68.33,2186.56,0
+C00944,Female,0,Month-to-month,57,54.26,3092.82,0
+C00945,Female,0,One year,40,46.04,1841.6,0
+C00946,Male,0,Month-to-month,34,117.96,4010.64,1
+C00947,Female,0,Month-to-month,30,43.73,1311.9,1
+C00948,Male,0,Month-to-month,27,92.02,2484.54,0
+C00949,Female,0,Month-to-month,40,46.94,1877.6,1
+C00950,Female,0,Month-to-month,49,25.19,1234.31,0
+C00951,Female,0,One year,31,87.69,2718.39,0
+C00952,Male,0,Two year,58,18.17,1053.86,0
+C00953,Female,0,Month-to-month,59,86.93,5128.87,1
+C00954,Male,0,Two year,31,43.54,1349.74,0
+C00955,Male,0,One year,65,94.1,6116.5,1
+C00956,Female,1,Two year,13,96.51,1254.63,0
+C00957,Male,0,One year,67,91.86,6154.62,0
+C00958,Male,0,One year,21,20.5,430.5,0
+C00959,Female,1,Month-to-month,41,89.78,3680.98,0
+C00960,Female,1,One year,21,118.99,2498.79,1
+C00961,Female,0,Two year,32,42.75,1368.0,0
+C00962,Male,1,Month-to-month,25,45.97,1149.25,1
+C00963,Female,1,Month-to-month,51,100.98,5149.98,0
+C00964,Male,0,Month-to-month,6,34.36,206.16,0
+C00965,Male,0,Two year,60,85.38,5122.8,0
+C00966,Male,0,Month-to-month,65,95.01,6175.65,1
+C00967,Female,0,One year,40,21.79,871.6,1
+C00968,Male,0,Two year,39,74.48,2904.72,0
+C00969,Female,0,Two year,50,76.74,3837.0,0
+C00970,Female,0,Month-to-month,15,48.95,734.25,0
+C00971,Female,0,One year,54,107.39,5799.06,0
+C00972,Female,0,Two year,16,34.6,553.6,0
+C00973,Female,0,Month-to-month,49,55.15,2702.35,0
+C00974,Female,0,One year,22,104.56,2300.32,0
+C00975,Female,0,Month-to-month,53,37.45,1984.85,0
+C00976,Female,0,One year,57,101.78,5801.46,0
+C00977,Male,1,Month-to-month,15,26.07,391.05,0
+C00978,Female,1,Month-to-month,44,67.9,2987.6,0
+C00979,Male,1,Month-to-month,36,25.68,924.48,0
+C00980,Male,1,Month-to-month,21,87.15,1830.15,1
+C00981,Male,0,Month-to-month,42,98.64,4142.88,1
+C00982,Male,0,One year,71,104.69,7432.99,0
+C00983,Male,0,Month-to-month,1,118.09,118.09,1
+C00984,Male,0,Month-to-month,68,86.55,5885.4,0
+C00985,Male,1,One year,61,96.44,5882.84,1
+C00986,Male,0,One year,38,69.59,2644.42,1
+C00987,Female,0,Month-to-month,44,111.1,4888.4,1
+C00988,Female,0,Two year,27,83.66,2258.82,1
+C00989,Male,0,Month-to-month,10,108.12,1081.2,0
+C00990,Female,0,Two year,41,42.02,1722.82,1
+C00991,Male,0,Month-to-month,58,68.67,3982.86,0
+C00992,Female,1,One year,17,92.44,1571.48,1
+C00993,Female,0,Two year,51,38.68,1972.68,0
+C00994,Male,0,Two year,54,39.56,2136.24,0
+C00995,Male,0,One year,54,117.76,6359.04,1
+C00996,Male,0,One year,25,62.33,1558.25,1
+C00997,Female,0,Month-to-month,28,36.55,1023.4,0
+C00998,Male,0,One year,30,51.81,1554.3,0
+C00999,Male,0,One year,61,58.53,3570.33,0
+C01000,Male,1,Two year,64,81.55,5219.2,0
+C01001,Male,0,Month-to-month,30,112.15,3364.5,1
+C01002,Male,0,Month-to-month,69,118.63,8185.47,1
+C01003,Male,0,One year,41,84.47,3463.27,0
+C01004,Female,0,Month-to-month,28,89.39,2502.92,1
+C01005,Male,0,Month-to-month,1,50.83,50.83,1
+C01006,Male,1,Month-to-month,44,105.43,4638.92,1
+C01007,Male,0,One year,46,40.22,1850.12,0
+C01008,Male,0,Month-to-month,69,28.85,1990.65,1
+C01009,Male,0,Month-to-month,51,117.27,5980.77,1
+C01010,Female,0,Month-to-month,3,106.14,318.42,1
+C01011,Male,0,Two year,41,48.97,2007.77,0
+C01012,Female,0,One year,53,86.87,4604.11,1
+C01013,Female,0,Month-to-month,36,65.64,2363.04,1
+C01014,Male,0,Month-to-month,31,50.96,1579.76,1
+C01015,Male,0,One year,58,47.25,2740.5,0
+C01016,Female,0,Month-to-month,44,31.87,1402.28,0
+C01017,Female,0,One year,49,74.03,3627.47,0
+C01018,Female,1,Month-to-month,33,63.55,2097.15,0
+C01019,Female,0,Two year,20,70.24,1404.8,1
+C01020,Female,0,Month-to-month,37,39.97,1478.89,1
+C01021,Female,0,One year,69,113.74,7848.06,0
+C01022,Male,0,Month-to-month,43,83.14,3575.02,0
+C01023,Male,0,Two year,51,109.76,5597.76,0
+C01024,Male,0,Two year,9,29.15,262.35,0
+C01025,Female,0,One year,71,81.53,5788.63,0
+C01026,Female,0,Month-to-month,18,104.65,1883.7,1
+C01027,Female,0,Month-to-month,69,51.75,3570.75,0
+C01028,Male,0,Two year,32,37.9,1212.8,0
+C01029,Female,0,One year,66,45.03,2971.98,0
+C01030,Female,0,Month-to-month,64,45.84,2933.76,0
+C01031,Female,1,Month-to-month,54,63.61,3434.94,1
+C01032,Male,0,Month-to-month,66,51.25,3382.5,0
+C01033,Female,0,Two year,44,45.67,2009.48,0
+C01034,Female,1,One year,61,84.15,5133.15,0
+C01035,Male,0,One year,13,23.41,304.33,1
+C01036,Male,0,One year,5,52.72,263.6,0
+C01037,Female,1,Month-to-month,39,88.35,3445.65,1
+C01038,Female,0,Month-to-month,58,35.94,2084.52,1
+C01039,Male,0,Month-to-month,55,40.53,2229.15,1
+C01040,Male,0,One year,38,38.47,1461.86,0
+C01041,Male,0,Month-to-month,37,18.09,669.33,1
+C01042,Female,0,Month-to-month,44,66.32,2918.08,1
+C01043,Female,0,Month-to-month,62,21.97,1362.14,0
+C01044,Male,0,Month-to-month,60,45.84,2750.4,0
+C01045,Female,0,One year,8,119.47,955.76,0
+C01046,Female,0,Month-to-month,43,111.68,4802.24,1
+C01047,Male,0,Month-to-month,28,39.94,1118.32,0
+C01048,Male,1,One year,57,49.62,2828.34,0
+C01049,Female,0,Month-to-month,36,65.3,2350.8,1
+C01050,Male,0,Month-to-month,71,104.13,7393.23,1
+C01051,Female,0,Month-to-month,31,99.87,3095.97,1
+C01052,Male,0,Two year,49,30.88,1513.12,0
+C01053,Male,0,Month-to-month,8,30.69,245.52,0
+C01054,Female,1,One year,67,60.51,4054.17,0
+C01055,Male,0,Two year,11,106.75,1174.25,0
+C01056,Female,0,One year,27,107.97,2915.19,1
+C01057,Male,1,Month-to-month,60,28.95,1737.0,0
+C01058,Female,0,One year,69,76.58,5284.02,0
+C01059,Female,0,Month-to-month,35,33.88,1185.8,0
+C01060,Male,0,Month-to-month,35,87.99,3079.65,0
+C01061,Male,0,Month-to-month,4,111.48,445.92,1
+C01062,Female,0,Month-to-month,70,64.39,4507.3,0
+C01063,Male,0,Month-to-month,2,26.47,52.94,0
+C01064,Male,1,Month-to-month,2,77.08,154.16,0
+C01065,Female,1,Month-to-month,34,59.67,2028.78,1
+C01066,Male,1,Month-to-month,1,100.71,100.71,1
+C01067,Male,0,One year,12,52.72,632.64,0
+C01068,Female,0,Two year,45,107.24,4825.8,0
+C01069,Female,1,Month-to-month,51,45.92,2341.92,0
+C01070,Male,0,One year,22,34.07,749.54,0
+C01071,Female,0,Month-to-month,57,49.26,2807.82,0
+C01072,Male,0,Month-to-month,44,21.56,948.64,0
+C01073,Male,0,Month-to-month,17,46.69,793.73,1
+C01074,Female,0,Month-to-month,51,85.33,4351.83,0
+C01075,Female,1,Month-to-month,43,32.51,1397.93,1
+C01076,Male,0,Month-to-month,58,29.36,1702.88,0
+C01077,Female,0,Month-to-month,11,31.5,346.5,1
+C01078,Female,1,Month-to-month,17,25.91,440.47,1
+C01079,Male,0,Month-to-month,22,107.21,2358.62,1
+C01080,Male,0,Month-to-month,25,114.3,2857.5,1
+C01081,Male,0,Month-to-month,64,22.75,1456.0,1
+C01082,Male,0,Month-to-month,53,95.53,5063.09,1
+C01083,Male,0,Month-to-month,39,93.19,3634.41,1
+C01084,Female,0,Month-to-month,39,119.68,4667.52,0
+C01085,Male,0,Month-to-month,63,53.48,3369.24,0
+C01086,Male,0,Month-to-month,32,47.12,1507.84,1
+C01087,Male,0,Two year,16,64.21,1027.36,1
+C01088,Male,0,Month-to-month,10,105.37,1053.7,0
+C01089,Female,0,Month-to-month,24,92.32,2215.68,1
+C01090,Male,0,Month-to-month,47,66.11,3107.17,0
+C01091,Female,1,Two year,34,42.95,1460.3,0
+C01092,Male,0,One year,30,92.16,2764.8,0
+C01093,Female,0,One year,35,105.16,3680.6,0
+C01094,Female,0,Two year,70,58.8,4116.0,0
+C01095,Female,0,Month-to-month,71,86.2,6120.2,0
+C01096,Male,0,Two year,12,58.82,705.84,1
+C01097,Male,0,Month-to-month,9,66.81,601.29,0
+C01098,Female,1,One year,18,71.54,1287.72,1
+C01099,Female,0,Month-to-month,61,97.12,5924.32,1
+C01100,Female,1,Month-to-month,33,117.71,3884.43,0
+C01101,Female,1,Two year,62,63.33,3926.46,0
+C01102,Male,0,Month-to-month,46,52.92,2434.32,1
+C01103,Female,0,Two year,40,56.11,2244.4,0
+C01104,Female,0,Month-to-month,20,31.66,633.2,1
+C01105,Female,1,One year,25,48.29,1207.25,0
+C01106,Female,0,Two year,11,26.82,295.02,0
+C01107,Male,0,Month-to-month,37,61.65,2281.05,1
+C01108,Male,1,Two year,20,35.07,701.4,0
+C01109,Female,0,One year,21,53.33,1119.93,0
+C01110,Male,0,One year,3,98.94,296.82,1
+C01111,Female,0,Month-to-month,57,43.08,2455.56,0
+C01112,Female,1,Month-to-month,67,80.41,5387.47,0
+C01113,Female,1,One year,36,109.92,3957.12,0
+C01114,Female,0,Month-to-month,39,75.83,2957.37,1
+C01115,Female,0,Month-to-month,66,37.77,2492.82,0
+C01116,Male,0,Month-to-month,37,53.17,1967.29,0
+C01117,Male,0,Two year,45,78.22,3519.9,0
+C01118,Male,0,Month-to-month,31,69.67,2159.77,1
+C01119,Female,0,One year,37,33.16,1226.92,0
+C01120,Female,0,Two year,38,63.57,2415.66,0
+C01121,Female,0,Month-to-month,51,73.39,3742.89,1
+C01122,Female,0,Month-to-month,43,45.27,1946.61,0
+C01123,Female,0,One year,36,80.47,2896.92,0
+C01124,Male,0,Month-to-month,6,25.16,150.96,1
+C01125,Male,0,One year,65,52.33,3401.45,0
+C01126,Male,0,One year,64,100.04,6402.56,0
+C01127,Male,1,One year,14,44.45,622.3,0
+C01128,Male,0,Month-to-month,21,79.73,1674.33,1
+C01129,Male,0,One year,70,59.82,4187.4,0
+C01130,Female,1,One year,23,50.28,1156.44,0
+C01131,Male,0,Month-to-month,58,111.45,6464.1,0
+C01132,Male,0,One year,56,53.01,2968.56,0
+C01133,Male,0,Two year,62,42.14,2612.68,0
+C01134,Male,1,One year,2,110.75,221.5,0
+C01135,Female,0,Month-to-month,35,94.09,3293.15,0
+C01136,Male,1,Month-to-month,41,87.54,3589.14,1
+C01137,Female,0,Month-to-month,60,23.05,1383.0,0
+C01138,Male,0,Month-to-month,16,31.38,502.08,0
+C01139,Male,0,Month-to-month,22,83.11,1828.42,1
+C01140,Male,0,Two year,13,39.36,511.68,0
+C01141,Female,0,Month-to-month,55,41.02,2256.1,0
+C01142,Male,0,Two year,71,97.47,6920.37,0
+C01143,Male,1,Month-to-month,10,47.16,471.6,1
+C01144,Female,0,Month-to-month,17,25.3,430.1,0
+C01145,Female,0,Month-to-month,22,21.72,477.84,1
+C01146,Male,0,Month-to-month,64,63.2,4044.8,0
+C01147,Male,0,One year,32,80.95,2590.4,1
+C01148,Male,0,Two year,21,106.63,2239.23,0
+C01149,Male,0,Two year,23,29.3,673.9,0
+C01150,Female,0,Month-to-month,43,38.06,1636.58,0
+C01151,Male,0,One year,28,72.04,2017.12,0
+C01152,Female,1,Month-to-month,10,55.14,551.4,1
+C01153,Male,0,Two year,59,67.22,3965.98,1
+C01154,Female,0,Month-to-month,30,112.26,3367.8,1
+C01155,Male,0,Month-to-month,19,73.58,1398.02,0
+C01156,Female,0,Month-to-month,52,60.34,3137.68,0
+C01157,Male,1,Month-to-month,53,118.92,6302.76,1
+C01158,Female,1,Month-to-month,12,24.65,295.8,1
+C01159,Female,1,Two year,6,113.08,678.48,1
+C01160,Male,0,One year,4,69.17,276.68,0
+C01161,Female,0,Two year,55,69.38,3815.9,0
+C01162,Male,0,Month-to-month,45,112.04,5041.8,1
+C01163,Male,0,One year,57,69.75,3975.75,0
+C01164,Male,0,Month-to-month,45,62.72,2822.4,1
+C01165,Female,0,Month-to-month,29,45.79,1327.91,1
+C01166,Female,1,Month-to-month,42,85.2,3578.4,1
+C01167,Female,0,Month-to-month,52,76.1,3957.2,0
+C01168,Male,0,One year,29,39.86,1155.94,0
+C01169,Male,0,Month-to-month,65,90.36,5873.4,1
+C01170,Male,0,Month-to-month,64,83.7,5356.8,0
+C01171,Male,0,One year,57,58.53,3336.21,0
+C01172,Female,0,Month-to-month,71,18.45,1309.95,0
+C01173,Female,1,Two year,28,63.55,1779.4,0
+C01174,Female,0,Month-to-month,9,18.62,167.58,1
+C01175,Female,0,Two year,35,25.65,897.75,0
+C01176,Female,0,One year,53,61.92,3281.76,0
+C01177,Female,0,One year,56,26.36,1476.16,0
+C01178,Female,0,One year,28,46.12,1291.36,0
+C01179,Female,0,Two year,21,84.86,1782.06,0
+C01180,Male,0,One year,32,49.48,1583.36,1
+C01181,Male,0,Month-to-month,58,119.76,6946.08,0
+C01182,Male,0,Month-to-month,5,111.46,557.3,1
+C01183,Female,0,One year,24,77.7,1864.8,0
+C01184,Female,0,Month-to-month,17,116.63,1982.71,1
+C01185,Female,1,Month-to-month,58,106.54,6179.32,1
+C01186,Female,0,Month-to-month,34,50.53,1718.02,1
+C01187,Male,0,Month-to-month,7,94.46,661.22,1
+C01188,Male,1,Month-to-month,19,31.96,607.24,1
+C01189,Female,0,One year,4,87.82,351.28,1
+C01190,Female,0,One year,34,68.09,2315.06,0
+C01191,Female,0,Two year,71,19.72,1400.12,0
+C01192,Female,0,Month-to-month,41,45.97,1884.77,0
+C01193,Male,0,Month-to-month,62,115.45,7157.9,1
+C01194,Male,1,One year,53,50.21,2661.13,0
+C01195,Male,0,Month-to-month,63,36.51,2300.13,0
+C01196,Male,0,One year,23,37.13,853.99,1
+C01197,Male,0,Month-to-month,68,66.88,4547.84,1
+C01198,Male,0,Two year,17,103.95,1767.15,1
+C01199,Male,0,Month-to-month,32,95.32,3050.24,1
