@@ -74,9 +74,10 @@ export default function DashboardPage() {
         <div className="flex items-center gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           <CircleAlert className="h-5 w-5 shrink-0" />
           <div>
-            <span className="font-semibold">Backend not reachable at 127.0.0.1:8000.</span>{" "}
-            Start it with <code className="rounded bg-amber-100 px-1">uvicorn app.main:app --port 8000</code> inside{" "}
-            <code className="rounded bg-amber-100 px-1">datanova/backend</code>.
+            
+<span className="font-semibold">Backend not reachable.</span>{" "}
+Please check the connection to the deployed backend.
+
           </div>
           <Button asChild size="sm" variant="outline" className="ml-auto">
             <Link href="/about">Setup help</Link>

@@ -24,7 +24,7 @@ import {
 import { StepHeader } from "@/components/workflow/step-header";
 import { ActionBar } from "@/components/workflow/page-shell";
 import { MessyOptionsSession } from "@/components/create/messy-options";
-import { api, type GeneratePreviewBody } from "@/lib/api";
+import { api, API_BASE, type GeneratePreviewBody } from "@/lib/api";
 import type { GenerationPreview, GenerateResponse, Analysis, Detection } from "@/lib/types";
 
 interface StoredConfig {
@@ -121,8 +121,8 @@ export default function UploadPreviewPage() {
     const pollTimer = setInterval(async () => {
       try {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE ?? "http://127.0.0.1:8000"}/api/upload/${config.upload_id}/generation-status`
-        );
+  `${API_BASE}/api/upload/${config.upload_id}/generation-status`
+);
         if (!res.ok) return;
         const data = await res.json();
         const idx = STAGES.findIndex((s) => s.key === data.stage);
