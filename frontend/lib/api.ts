@@ -26,7 +26,7 @@ import type {
 } from "./types";
 
 export const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE ?? "http://127.0.0.1:8000";
+  process.env.NEXT_PUBLIC_API_BASE ?? "https://datanova-qz07.onrender.com";
 
 class ApiError extends Error {
   status: number;
