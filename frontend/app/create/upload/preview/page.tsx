@@ -24,7 +24,7 @@ import {
 import { StepHeader } from "@/components/workflow/step-header";
 import { ActionBar } from "@/components/workflow/page-shell";
 import { MessyOptionsSession } from "@/components/create/messy-options";
-import { api, type GeneratePreviewBody } from "@/lib/api";
+import { api, API_BASE, type GeneratePreviewBody } from "@/lib/api";
 import type { GenerationPreview, GenerateResponse, Analysis, Detection } from "@/lib/types";
 
 interface StoredConfig {
